@@ -2,7 +2,6 @@ version: '3'
 
 volumes:
   pgdata:
-  code:
 
 services:
   api:
@@ -11,7 +10,7 @@ services:
     depends_on:
       - postgres
     volumes:
-      - code:/app
+      - .:/code:z
     ports:
       - '80:80'
 
