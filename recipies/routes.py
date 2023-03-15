@@ -2,8 +2,10 @@ from fastapi import APIRouter
 from fastapi import HTTPException, Depends
 from sqlmodel import Session, create_engine
 from config import settings
-from recipies.models import Ingredient, IngredientDetail
+from recipies.models import CreateIngredient, Ingredient
 from users.models import User, UserDetail
+
+ingredient_router = APIRouter(prefix='/ingredient', tags=['ingredients'])
 
 engine = create_engine(settings.DATABASE_URL, echo=True)
 
@@ -11,11 +13,8 @@ def get_session():
     with Session(engine) as session:
         yield session
 
-ingredient_router = APIRouter(prefix='/ingredient', tags=['ingredients'])
-
-
 @ingredient_router.post("/", response_model=Ingredient)
-def create(ingredient: Ingredient, session: Session = Depends(get_session)):
+def create(ingredient: CreateIngredient, session: Session = Depends(get_session)):
     ingredient = Ingredient.from_orm(ingredient)
     session.add(ingredient)
     session.commit()

@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from sqlmodel import create_engine, SQLModel
+from sqlmodel import create_engine, SQLModel, Session
 
 from config import settings
 from users.routes import user_router
@@ -9,9 +9,12 @@ app = FastAPI()
 
 app.include_router(user_router)
 app.include_router(ingredient_router)
-database_url = settings.DATABASE_URL
 
-engine = create_engine(database_url, echo=True)
+engine = create_engine(settings.DATABASE_URL, echo=True)
+
+def get_session():
+    with Session(engine) as session:
+        yield session
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
