@@ -8,6 +8,9 @@ from recipies.models import (
     Ingredient,
     ListIngredient,
     UpdateIngredient,
+    CreateDish,
+    Dish,
+    IngredientItem,
 )
 
 ingredient_router = APIRouter(prefix="/ingredient", tags=["ingredients"])
@@ -78,3 +81,23 @@ def delete_user(ingredient_id: int, session: Session = Depends(get_session)):
     session.delete(ingredient)
     session.commit()
     return {f"Ingredient {ingredient_id} deleted"}
+
+
+@ingredient_router.post("/recipe/")
+def crate_recipe(dish_data: CreateDish, session: Session = Depends(get_session)):
+    dish_data = dish_data.dict()
+    ingredients = dish_data.pop("ingredients")
+    # dish = Dish(**dish_data)
+    # session.add(dish)
+    # session.commit()
+    ingredient_items = []
+    for ingredient in ingredients:
+        i = session.exec(
+            select(Ingredient).where(
+                Ingredient.name == ingredient["ingredient"]["name"]
+            )
+        )
+        print(i)
+        # IngredientItem()
+    # ingredients = [IngredientItem(**ingredient) for ingredient in ingredients]
+    return "Siema"

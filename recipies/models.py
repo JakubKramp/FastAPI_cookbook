@@ -1,11 +1,9 @@
-from typing import Optional
+from typing import Optional, List
 
 import requests
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.event import listens_for
-from sqlmodel import Field, SQLModel, Session
-
-from users.routes import get_session
+from sqlmodel import Field, SQLModel, Relationship
 from config import settings
 
 
@@ -27,6 +25,7 @@ class Ingredient(SQLModel, table=True):
     carbohydrates_total: Optional[float]
     fiber: Optional[float]
     sugar: Optional[float]
+    ingredient_items: List["IngredientItem"] = Relationship(back_populates="ingredient")
 
 
 class CreateIngredient(SQLModel):
@@ -63,3 +62,33 @@ def set_nutritional_values(mapper, connection, target):
         if key.find("_") >= 0:
             key = "_".join(key.split("_")[:-1])
         target.__setattr__(key, value)
+
+
+class Dish(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    ingredients: Optional[List["IngredientItem"]] = Relationship(back_populates="dish")
+    name: str
+    recipe: Optional[str]
+
+
+class CreateIngredientItem(SQLModel):
+    ingredient: CreateIngredient
+    amount: int
+
+
+class CreateDish(SQLModel):
+    ingredients: List[CreateIngredientItem]
+    name: str
+    recipes: Optional[str]
+
+
+class IngredientItem(SQLModel, table=True):
+    """
+    This model is a proxy between Ingredient and Recipe, allowing us to set amount of produce for each dish.
+    Amount is in grams.
+    """
+
+    id: int | None = Field(default=None, primary_key=True)
+    ingredient: Ingredient = Relationship(back_populates="ingredient_items")
+    dish: Dish = Relationship(back_populates="ingredients")
+    amount: int
