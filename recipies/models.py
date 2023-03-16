@@ -54,7 +54,8 @@ def set_nutritional_values(mapper, connection, target):
     response = requests.get(
         settings.NUTRITION_API_URL,
         params={"query": target.name},
-        headers={"X-Api-Key": settings.NUTRITION_APIKEY},)
+        headers={"X-Api-Key": settings.NUTRITION_APIKEY},
+    )
     nutrition_data = response.json()[0]
     nutrition_data.pop("name")
     nutrition_data.pop("serving_size_g")
