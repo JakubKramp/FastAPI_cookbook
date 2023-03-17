@@ -7,7 +7,20 @@ from sqlmodel import Field, SQLModel, Relationship
 from config import settings
 
 
-class Ingredient(SQLModel, table=True):
+class NutritionalValues(SQLModel):
+    calories: Optional[float] = 0.0
+    fat_total: Optional[float] = 0.0
+    fat_saturated: Optional[float] = 0.0
+    protein: Optional[float] = 0.0
+    sodium: Optional[float] = 0.0
+    potassium: Optional[float] = 0.0
+    cholesterol: Optional[float] = 0.0
+    carbohydrates_total: Optional[float] = 0.0
+    fiber: Optional[float] = 0.0
+    sugar: Optional[float] = 0.0
+
+
+class Ingredient(NutritionalValues, table=True):
     """
     Nutritional values by default refer to 100g serving.
     """
@@ -15,16 +28,6 @@ class Ingredient(SQLModel, table=True):
     __table_args__ = (UniqueConstraint("name"),)
     id: int | None = Field(default=None, primary_key=True)
     name: str
-    calories: Optional[float]
-    fat_total: Optional[float]
-    fat_saturated: Optional[float]
-    protein: Optional[float]
-    sodium: Optional[float]
-    potassium: Optional[float]
-    cholesterol: Optional[float]
-    carbohydrates_total: Optional[float]
-    fiber: Optional[float]
-    sugar: Optional[float]
     ingredient_items: List["IngredientItem"] = Relationship(back_populates="ingredient")
 
 
@@ -66,7 +69,7 @@ def set_nutritional_values(mapper, connection, target):
 
 class Dish(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    ingredients: Optional[List["IngredientItem"]] = Relationship(back_populates="dish")
+    ingredients: List["IngredientItem"] = Relationship(back_populates="dish")
     name: str
     recipe: Optional[str]
 
@@ -79,7 +82,23 @@ class CreateIngredientItem(SQLModel):
 class CreateDish(SQLModel):
     ingredients: List[CreateIngredientItem]
     name: str
-    recipes: Optional[str]
+    recipe: Optional[str]
+
+
+class ListIngredientItem(SQLModel):
+    amount: int
+    ingredient: CreateIngredient
+
+
+class ListDish(SQLModel):
+    id: int
+    name: str
+    recipe: Optional[str]
+    ingredients: List[ListIngredientItem]
+
+
+class DishDetail(ListDish):
+    nutritional_values: NutritionalValues
 
 
 class IngredientItem(SQLModel, table=True):
@@ -89,6 +108,8 @@ class IngredientItem(SQLModel, table=True):
     """
 
     id: int | None = Field(default=None, primary_key=True)
-    ingredient: Ingredient = Relationship(back_populates="ingredient_items")
-    dish: Dish = Relationship(back_populates="ingredients")
+    ingredient_id: Optional[int] = Field(default=None, foreign_key="ingredient.id")
+    ingredient: Optional["Ingredient"] = Relationship(back_populates="ingredient_items")
+    dish_id: Optional[int] = Field(default=None, foreign_key="dish.id")
+    dish: Optional[Dish] = Relationship(back_populates="ingredients")
     amount: int

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from fastapi import HTTPException, Depends
 from sqlalchemy import select
+from sqlalchemy import func
 from sqlmodel import Session, create_engine
 from config import settings
 from recipies.models import (
@@ -11,6 +12,9 @@ from recipies.models import (
     CreateDish,
     Dish,
     IngredientItem,
+    ListDish,
+    DishDetail,
+    NutritionalValues,
 )
 
 ingredient_router = APIRouter(prefix="/ingredient", tags=["ingredients"])
@@ -43,8 +47,6 @@ def ingredient_detail(ingredient_id: int, session: Session = Depends(get_session
 @ingredient_router.get("/", response_model=list[ListIngredient])
 def ingredient_list(session: Session = Depends(get_session)):
     ingredients = session.scalars(select(Ingredient)).all()
-    if not ingredients:
-        raise HTTPException(status_code=404, detail="Ingredient not found")
     return ingredients
 
 
@@ -74,7 +76,7 @@ def update_ingredient(
 
 
 @ingredient_router.delete("/{ingredient_id}")
-def delete_user(ingredient_id: int, session: Session = Depends(get_session)):
+def delete_ingredient(ingredient_id: int, session: Session = Depends(get_session)):
     ingredient = session.get(Ingredient, ingredient_id)
     if not ingredient:
         raise HTTPException(status_code=404, detail="User not found")
@@ -83,21 +85,70 @@ def delete_user(ingredient_id: int, session: Session = Depends(get_session)):
     return {f"Ingredient {ingredient_id} deleted"}
 
 
-@ingredient_router.post("/recipe/")
-def crate_recipe(dish_data: CreateDish, session: Session = Depends(get_session)):
+@ingredient_router.post("/dish/", response_model=Dish)
+def create_dish(dish_data: CreateDish, session: Session = Depends(get_session)):
     dish_data = dish_data.dict()
     ingredients = dish_data.pop("ingredients")
-    # dish = Dish(**dish_data)
-    # session.add(dish)
-    # session.commit()
+    dish = Dish(**dish_data)
+    session.add(dish)
+    session.commit()
+    session.refresh(dish)
     ingredient_items = []
     for ingredient in ingredients:
-        i = session.exec(
+        i = session.scalars(
             select(Ingredient).where(
-                Ingredient.name == ingredient["ingredient"]["name"]
+                Ingredient.name == ingredient["ingredient"]["name"].lower()
             )
-        )
-        print(i)
-        # IngredientItem()
-    # ingredients = [IngredientItem(**ingredient) for ingredient in ingredients]
-    return "Siema"
+        ).first()
+        if not i:
+            i = Ingredient(name=ingredient["ingredient"]["name"].lower())
+            session.add(i)
+            session.commit()
+        item = IngredientItem(ingredient=i, amount=ingredient["amount"], dish=dish)
+        ingredient_items.append(item)
+    session.bulk_save_objects(ingredient_items)
+    session.add(dish)
+    session.commit()
+    session.refresh(dish)
+    return dish
+
+
+@ingredient_router.get("/dish/", response_model=list[ListDish])
+def dish_list(session: Session = Depends(get_session)):
+    dishes = session.scalars(select(Dish)).all()
+    return dishes
+
+
+@ingredient_router.delete("/dish/{dish_id}")
+def delete_dish(dish_id: int, session: Session = Depends(get_session)):
+    dish = session.get(Dish, dish_id)
+    if not dish:
+        raise HTTPException(status_code=404, detail="Dish not found")
+    session.delete(dish)
+    session.commit()
+    return {f"Dish {dish_id} deleted"}
+
+
+@ingredient_router.get("/dish/{dish_id}", response_model=DishDetail)
+def dish_detail(dish_id: int, session: Session = Depends(get_session)):
+    nut_values = NutritionalValues.__fields__.keys()
+    nut_expressions = [
+        func.sum(getattr(Ingredient, param) * IngredientItem.amount / 100).label(param)
+        for param in nut_values
+    ]
+    nut_query = (
+        session.query(*nut_expressions)
+        .join(IngredientItem, Ingredient.id == IngredientItem.ingredient_id)
+        .filter(IngredientItem.dish_id == dish_id)
+        .group_by(IngredientItem.dish_id)
+        .first()
+    )
+    dish = session.get(Dish, dish_id)
+    dish_dict = dish.dict()
+    dish_dict["nutritional_values"] = {
+        nut_value: value for nut_value, value in zip(nut_values, nut_query)
+    }
+    dish_dict["ingredients"] = dish.ingredients
+    if not dish:
+        raise HTTPException(status_code=404, detail="Dish not found")
+    return dish_dict
