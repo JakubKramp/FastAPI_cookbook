@@ -11,3 +11,11 @@ class User(SQLModel, table=True):
 class UserDetail(SQLModel):
     email: str
     password: str
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "email": "jeff.spicoli@labeouf.com",
+                "password": "hewillnotdivideus",
+            }
+        }

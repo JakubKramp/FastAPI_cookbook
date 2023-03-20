@@ -19,6 +19,22 @@ class NutritionalValues(SQLModel):
     fiber: Optional[float] = 0.0
     sugar: Optional[float] = 0.0
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "calories": 34,
+                "fat_total": 0.2,
+                "fat_saturated": 0,
+                "protein": 0.8,
+                "sodium": 57,
+                "potassium": 30,
+                "cholesterol": 0,
+                "carbohydrates_total": 8.3,
+                "fiber": 3,
+                "sugar": 3.4,
+            }
+        }
+
 
 class Ingredient(NutritionalValues, table=True):
     """
@@ -30,9 +46,34 @@ class Ingredient(NutritionalValues, table=True):
     name: str
     ingredient_items: List["IngredientItem"] = Relationship(back_populates="ingredient")
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": 72,
+                "name": "carrot",
+                "calories": 34,
+                "fat_total": 0.2,
+                "fat_saturated": 0,
+                "protein": 0.8,
+                "sodium": 57,
+                "potassium": 30,
+                "cholesterol": 0,
+                "carbohydrates_total": 8.3,
+                "fiber": 3,
+                "sugar": 3.4,
+            }
+        }
+
 
 class CreateIngredient(SQLModel):
     name: str
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "carrot",
+            }
+        }
 
 
 class ListIngredient(CreateIngredient):
@@ -40,6 +81,17 @@ class ListIngredient(CreateIngredient):
     fat_total: Optional[float]
     protein: Optional[float]
     carbohydrates_total: Optional[float]
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "carrot",
+                "calories": 34,
+                "fat_total": 0.2,
+                "protein": 0.8,
+                "carbohydrates_total": 8.3,
+            }
+        }
 
 
 class UpdateIngredient(ListIngredient):
@@ -49,6 +101,23 @@ class UpdateIngredient(ListIngredient):
     cholesterol: Optional[float]
     fiber: Optional[float]
     sugar: Optional[float]
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "name": "carrot",
+                "calories": 34,
+                "fat_total": 0.2,
+                "fat_saturated": 0,
+                "protein": 0.8,
+                "sodium": 57,
+                "potassium": 30,
+                "cholesterol": 0,
+                "carbohydrates_total": 8.3,
+                "fiber": 3,
+                "sugar": 3.4,
+            }
+        }
 
 
 @listens_for(Ingredient, "before_insert")
@@ -73,6 +142,25 @@ class Dish(SQLModel, table=True):
     name: str
     recipe: Optional[str]
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": 72,
+                "name": "Mashed potatoes",
+                "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
+                "ingredients": [
+                    {
+                        "amount": 700,
+                        "ingredient": {"name": "potato"},
+                    },
+                    {
+                        "amount": 300,
+                        "ingredient": {"name": "butter"},
+                    },
+                ],
+            }
+        }
+
 
 class CreateIngredientItem(SQLModel):
     ingredient: CreateIngredient
@@ -80,9 +168,28 @@ class CreateIngredientItem(SQLModel):
 
 
 class CreateDish(SQLModel):
-    ingredients: List[CreateIngredientItem]
     name: str
     recipe: Optional[str]
+    ingredients: List[CreateIngredientItem]
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": 72,
+                "name": "Mashed potatoes",
+                "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
+                "ingredients": [
+                    {
+                        "amount": 700,
+                        "ingredient": {"name": "potato"},
+                    },
+                    {
+                        "amount": 300,
+                        "ingredient": {"name": "butter"},
+                    },
+                ],
+            }
+        }
 
 
 class ListIngredientItem(SQLModel):
@@ -96,9 +203,47 @@ class ListDish(SQLModel):
     recipe: Optional[str]
     ingredients: List[ListIngredientItem]
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": 72,
+                "name": "Mashed potatoes",
+                "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
+                "ingredients": [
+                    {
+                        "amount": 700,
+                        "ingredient": {"name": "potato"},
+                    },
+                    {
+                        "amount": 300,
+                        "ingredient": {"name": "butter"},
+                    },
+                ],
+            }
+        }
+
 
 class DishDetail(ListDish):
     nutritional_values: NutritionalValues
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": 72,
+                "name": "Mashed potatoes",
+                "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
+                "ingredients": [
+                    {
+                        "amount": 700,
+                        "ingredient": {"name": "potato"},
+                    },
+                    {
+                        "amount": 300,
+                        "ingredient": {"name": "butter"},
+                    },
+                ],
+            }
+        }
 
 
 class IngredientItem(SQLModel, table=True):
