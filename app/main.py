@@ -1,5 +1,6 @@
-from fastapi import FastAPI
-from sqlmodel import create_engine, SQLModel, Session
+from fastapi import FastAPI, Depends
+from fastapi.security import OAuth2PasswordBearer
+from sqlmodel import create_engine, SQLModel
 
 from config import settings
 from users.routes import user_router
@@ -12,10 +13,7 @@ app.include_router(ingredient_router)
 
 engine = create_engine(settings.DATABASE_URL, echo=True)
 
-
-def get_session():
-    with Session(engine) as session:
-        yield session
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 def create_db_and_tables():
@@ -23,3 +21,8 @@ def create_db_and_tables():
 
 
 create_db_and_tables()
+
+
+@app.get("/items/")
+async def read_items(token: str = Depends(oauth2_scheme)):
+    return {"token": token}

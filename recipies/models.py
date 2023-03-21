@@ -229,7 +229,6 @@ class DishDetail(ListDish):
     class Config:
         schema_extra = {
             "example": {
-                "id": 72,
                 "name": "Mashed potatoes",
                 "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
                 "ingredients": [
