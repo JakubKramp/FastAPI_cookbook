@@ -1,10 +1,16 @@
+from datetime import timedelta
+
 from fastapi import APIRouter
 from fastapi import HTTPException, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, create_engine
 from passlib.context import CryptContext
+from starlette import status
 
+from app.security import authenticate_user, create_access_token, get_password_hash
+from auth.schemas import Token
 from config import settings
-from users.models import User, UserDetail
+from auth.models import User, UserDetail
 
 engine = create_engine(settings.DATABASE_URL, echo=True)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -15,16 +21,19 @@ def get_session():
         yield session
 
 
-user_router = APIRouter(prefix="/user", tags=["users"])
+user_router = APIRouter(prefix="/user", tags=["auth"])
 
 
 @user_router.post("/", response_model=UserDetail, status_code=201)
 def sign_up(user: UserDetail, session: Session = Depends(get_session)):
-    user = User.from_orm(user)
-    session.add(user)
+    db_user = User(
+        username=user.username,
+        email=user.email,
+        password=get_password_hash(user.password),
+    )
+    session.add(db_user)
     session.commit()
-    session.refresh(user)
-    return user
+    return db_user
 
 
 @user_router.get("/", response_model=UserDetail, status_code=200)
@@ -61,14 +70,20 @@ def delete_user(user_id: int, session: Session = Depends(get_session)):
     return {f"User {user_id} deleted"}
 
 
-@user_router.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user_dict = fake_users_db.get(form_data.username)
-    if not user_dict:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-    user = UserInDB(**user_dict)
-    hashed_password = fake_hash_password(form_data.password)
-    if not hashed_password == user.hashed_password:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
-
-    return {"access_token": user.username, "token_type": "bearer"}
+@user_router.post("/login", response_model=Token)
+async def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_session),
+):
+    user = authenticate_user(form_data.username, form_data.password, session)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
