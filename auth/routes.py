@@ -3,11 +3,16 @@ from datetime import timedelta
 from fastapi import APIRouter
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlmodel import Session, create_engine
+from sqlmodel import Session, create_engine, select
 from passlib.context import CryptContext
 from starlette import status
 
-from app.security import authenticate_user, create_access_token, get_password_hash
+from app.security import (
+    authenticate_user,
+    create_access_token,
+    get_password_hash,
+    get_current_username,
+)
 from auth.schemas import Token
 from config import settings
 from auth.models import User, UserDetail
@@ -42,6 +47,16 @@ def user_detail(user_id: int, session: Session = Depends(get_session)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+@user_router.get("/me", response_model=UserDetail, status_code=200)
+def current_user(
+    session: Session = Depends(get_session), user: str = Depends(get_current_username)
+):
+    authenticated_user = session.scalars(
+        select(User).where(User.username == user)
+    ).first()
+    return authenticated_user
 
 
 @user_router.patch("/", response_model=UserDetail)
