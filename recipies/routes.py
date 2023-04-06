@@ -2,10 +2,9 @@ from fastapi import APIRouter
 from fastapi import HTTPException, Depends
 from sqlalchemy import select
 from sqlalchemy import func
-from sqlmodel import Session, create_engine
+from sqlmodel import Session
 from starlette.responses import JSONResponse
 
-from config import settings
 from recipies.models import (
     CreateIngredient,
     Ingredient,
@@ -18,15 +17,9 @@ from recipies.models import (
     DishDetail,
     NutritionalValues,
 )
+from app.utils import get_session
 
-ingredient_router = APIRouter(prefix="/ingredient", tags=["ingredients"])
-
-engine = create_engine(settings.DATABASE_URL, echo=True)
-
-
-def get_session():
-    with Session(engine) as session:
-        yield session
+ingredient_router = APIRouter(prefix="/ingredients", tags=["ingredients"])
 
 
 @ingredient_router.post("/", response_model=Ingredient, status_code=201)
@@ -83,7 +76,7 @@ def update_ingredient(
 def delete_ingredient(ingredient_id: int, session: Session = Depends(get_session)):
     ingredient = session.get(Ingredient, ingredient_id)
     if not ingredient:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Ingredient not found")
     session.delete(ingredient)
     session.commit()
     return JSONResponse(content={"message": f"Ingredient {ingredient_id} deleted"})

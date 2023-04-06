@@ -5,6 +5,7 @@ from sqlalchemy import UniqueConstraint
 from sqlalchemy.event import listens_for
 from sqlmodel import Field, SQLModel, Relationship
 from config import settings
+from recipies.tests.test_data import example_ingredient
 
 
 class NutritionalValues(SQLModel):
@@ -47,22 +48,9 @@ class Ingredient(NutritionalValues, table=True):
     ingredient_items: List["IngredientItem"] = Relationship(back_populates="ingredient")
 
     class Config:
-        schema_extra = {
-            "example": {
-                "id": 72,
-                "name": "carrot",
-                "calories": 34,
-                "fat_total": 0.2,
-                "fat_saturated": 0,
-                "protein": 0.8,
-                "sodium": 57,
-                "potassium": 30,
-                "cholesterol": 0,
-                "carbohydrates_total": 8.3,
-                "fiber": 3,
-                "sugar": 3.4,
-            }
-        }
+        example = example_ingredient.copy()
+        example.update({"id": 72})
+        schema_extra = {"example": example}
 
 
 class CreateIngredient(SQLModel):
@@ -103,25 +91,12 @@ class UpdateIngredient(ListIngredient):
     sugar: Optional[float]
 
     class Config:
-        schema_extra = {
-            "example": {
-                "name": "carrot",
-                "calories": 34,
-                "fat_total": 0.2,
-                "fat_saturated": 0,
-                "protein": 0.8,
-                "sodium": 57,
-                "potassium": 30,
-                "cholesterol": 0,
-                "carbohydrates_total": 8.3,
-                "fiber": 3,
-                "sugar": 3.4,
-            }
-        }
+        schema_extra = {"example": example_ingredient}
 
 
 @listens_for(Ingredient, "before_insert")
 def set_nutritional_values(mapper, connection, target):
+    print("SIEMA")
     response = requests.get(
         settings.NUTRITION_API_URL,
         params={"query": target.name},
