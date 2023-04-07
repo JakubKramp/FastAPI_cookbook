@@ -1,27 +1,41 @@
-from unittest import mock
-from unittest.mock import patch
-
 import pytest
-from requests.cookies import MockResponse
+import requests
 
 from sqlalchemy_utils import create_database, drop_database
 from sqlmodel import create_engine, SQLModel, Session
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 
 from app.main import app
-from app.utils import get_session
+from app.utils.db import get_session
+from app.utils.tests import MockResponse
 from config import settings
-from recipies.tests.test_data import example_ingredient
+from recipies.tests.test_data import (
+    example_ingredient,
+    example_ingredient_api_response,
+    example_create_dish,
+)
 
 
-@pytest.fixture(name="session", scope="session")
-def session_fixture():
+@pytest.fixture(name="engine", scope="session")
+def db_engine():
     engine = create_engine(settings.TEST_DATABASE_URL)
+    yield engine
+
+
+@pytest.fixture(name="db", scope="session", autouse=True)
+def database_setup(engine):
     create_database(engine.url)
+    SQLModel.metadata.create_all(engine)
+    yield
+    drop_database(engine.url)
+
+
+@pytest.fixture(name="session", scope="function", autouse=True)
+def session_fixture(engine):
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:
         yield session
-    drop_database(engine.url)
+    SQLModel.metadata.drop_all(engine)
 
 
 @pytest.fixture(name="client")
@@ -41,9 +55,16 @@ def ingredient_fixture():
     return example_ingredient
 
 
-@pytest.fixture
-def mock_nutrition_api(monkeypatch):
-    def mock_response():
-        return example_ingredient
+def get_example_ingredient(*args, **kwargs):
+    r = MockResponse(json_data=example_ingredient_api_response.copy(), status_code=200)
+    return r
 
-    monkeypatch.setattr("requests.get", lambda url: MockResponse(mock_response()))
+
+@pytest.fixture(scope="function", autouse=True)
+def mock_nutrition_api(monkeypatch):
+    monkeypatch.setattr(requests, "get", get_example_ingredient)
+
+
+@pytest.fixture(name="create_dish")
+def create_dish_fixture():
+    return example_create_dish

@@ -17,7 +17,7 @@ from recipies.models import (
     DishDetail,
     NutritionalValues,
 )
-from app.utils import get_session
+from app.utils.db import get_session
 
 ingredient_router = APIRouter(prefix="/ingredients", tags=["ingredients"])
 
@@ -79,7 +79,9 @@ def delete_ingredient(ingredient_id: int, session: Session = Depends(get_session
         raise HTTPException(status_code=404, detail="Ingredient not found")
     session.delete(ingredient)
     session.commit()
-    return JSONResponse(content={"message": f"Ingredient {ingredient_id} deleted"})
+    return JSONResponse(
+        content={"message": f"Ingredient {ingredient_id} deleted"}, status_code=204
+    )
 
 
 @ingredient_router.post(
@@ -102,7 +104,6 @@ def create_dish(dish_data: CreateDish, session: Session = Depends(get_session)):
     session.add(dish)
     session.commit()
     session.refresh(dish)
-    ingredient_items = []
     for ingredient in ingredients:
         i = session.scalars(
             select(Ingredient).where(
@@ -114,8 +115,8 @@ def create_dish(dish_data: CreateDish, session: Session = Depends(get_session)):
             session.add(i)
             session.commit()
         item = IngredientItem(ingredient=i, amount=ingredient["amount"], dish=dish)
-        ingredient_items.append(item)
-    session.bulk_save_objects(ingredient_items)
+        session.add(item)
+        session.commit()
     session.add(dish)
     session.commit()
     session.refresh(dish)
@@ -135,7 +136,7 @@ def delete_dish(dish_id: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="Dish not found")
     session.delete(dish)
     session.commit()
-    return JSONResponse(content={"message": f"Dish {dish_id} deleted"})
+    return JSONResponse(content={"message": f"Dish {dish_id} deleted"}, status_code=204)
 
 
 @ingredient_router.get("/dish/{dish_id}", response_model=DishDetail, status_code=200)

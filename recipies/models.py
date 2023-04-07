@@ -96,15 +96,14 @@ class UpdateIngredient(ListIngredient):
 
 @listens_for(Ingredient, "before_insert")
 def set_nutritional_values(mapper, connection, target):
-    print("SIEMA")
     response = requests.get(
         settings.NUTRITION_API_URL,
         params={"query": target.name},
         headers={"X-Api-Key": settings.NUTRITION_APIKEY},
     )
     nutrition_data = response.json()[0]
-    nutrition_data.pop("name")
-    nutrition_data.pop("serving_size_g")
+    nutrition_data.pop("name", None)
+    nutrition_data.pop("serving_size_g", None)
     for key, value in nutrition_data.items():
         if key.find("_") >= 0:
             key = "_".join(key.split("_")[:-1])
