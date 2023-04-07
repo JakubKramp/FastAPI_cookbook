@@ -1,0 +1,22 @@
+version: '3'
+
+volumes:
+  pgdata:
+
+services:
+  api:
+    build:
+      context: .
+    depends_on:
+      - postgres
+    volumes:
+      - .:/code:z
+    ports:
+      - '80:80'
+
+  postgres:
+    image: 'postgres:14.1'
+    ports:
+          - "5431:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
