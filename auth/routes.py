@@ -16,14 +16,10 @@ from app.security import (
 from auth.schemas import Token
 from config import settings
 from auth.models import User, UserDetail
+from app.utils.db import get_session
 
 engine = create_engine(settings.DATABASE_URL, echo=True)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def get_session():
-    with Session(engine) as session:
-        yield session
 
 
 user_router = APIRouter(prefix="/user", tags=["auth"])
@@ -61,9 +57,11 @@ def current_user(
 
 @user_router.patch("/", response_model=UserDetail)
 def update_user(
-    user_id: int, user_data: UserDetail, session: Session = Depends(get_session)
+    user_data: UserDetail,
+    session: Session = Depends(get_session),
+    user: str = Depends(get_current_username),
 ):
-    user = session.get(User, user_id)
+    user = session.scalars(select(User).where(User.username == user)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     user_data = user_data.dict(exclude_unset=True)
@@ -76,13 +74,15 @@ def update_user(
 
 
 @user_router.delete("/")
-def delete_user(user_id: int, session: Session = Depends(get_session)):
-    user = session.get(User, user_id)
+def delete_user(
+    session: Session = Depends(get_session), user: str = Depends(get_current_username)
+):
+    user = session.scalars(select(User).where(User.username == user)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     session.delete(user)
     session.commit()
-    return {f"User {user_id} deleted"}
+    return {f"User {user.id} deleted"}
 
 
 @user_router.post("/login", response_model=Token)
