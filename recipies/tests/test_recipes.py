@@ -1,7 +1,6 @@
-import pytest
 from fastapi.testclient import TestClient
 from requests import Session
-from sqlalchemy import select, func
+from sqlalchemy import func
 
 from recipies.models import Ingredient, CreateIngredient, Dish, IngredientItem
 
@@ -78,7 +77,7 @@ def test_delete_dish(session: Session, client: TestClient, create_dish):
     client.post("/ingredients/dish/", json=create_dish)
     response = client.delete("/ingredients/dish/1")
     assert response.status_code == 204
-    assert response.json() == {"message": f"Dish 1 deleted"}
+    assert response.json() == {"message": "Dish 1 deleted"}
 
 
 def test_delete_dish_does_not_exist(session: Session, client: TestClient, create_dish):
