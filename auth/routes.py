@@ -15,7 +15,7 @@ from app.security import (
 )
 from auth.schemas import Token
 from config import settings
-from auth.models import User, UserDetail
+from auth.models import User, UserDetail, Profile
 from app.utils.db import get_session
 
 engine = create_engine(settings.DATABASE_URL, echo=True)
@@ -102,3 +102,12 @@ async def login_for_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@user_router.post("/create_profile", response_model=Profile)
+async def create_profile(
+    profile_data: Profile,
+    session: Session = Depends(get_session),
+    user: str = Depends(get_current_username),
+):
+    ...

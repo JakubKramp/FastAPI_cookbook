@@ -55,11 +55,11 @@ class Profile(SQLModel, table=True):
     class Config:
         schema_extra = {
             "example": {
-                "sex": "male",
+                "sex": Sex.male,
                 "age": 30,
                 "height": 180,
                 "wieght": 80,
-                "activity_factor": "Little/no excercise",
+                "activity_factor": ActivityFactor.little,
                 "smoking": True,
             }
         }
