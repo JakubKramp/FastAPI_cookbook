@@ -14,13 +14,13 @@ from app.security import (
 )
 from auth.schemas import Token
 from config import settings
-from auth.models import User, UserDetail, Profile, UserList
+from auth.models import User, UserDetail, Profile, UserCreate
 from app.utils.db import get_session
 
 user_router = APIRouter(prefix="/user", tags=["auth"])
 
 
-@user_router.post("/", response_model=UserDetail, status_code=201)
+@user_router.post("/", response_model=UserCreate, status_code=201)
 def sign_up(user: UserDetail, session: Session = Depends(get_session)):
     db_user = User(
         username=user.username,
@@ -40,17 +40,17 @@ def user_detail(user_id: int, session: Session = Depends(get_session)):
     return user
 
 
-@user_router.get("/me", response_model=UserList, status_code=200)
+@user_router.get("/me", response_model=UserDetail, status_code=200)
 def current_user(
     session: Session = Depends(get_session), user: str = Depends(get_current_username)
 ):
     authenticated_user = session.scalars(
-        select(User).where(User.username == user)
+        select(User, Profile).join(Profile).where(User.username == user)
     ).first()
     return authenticated_user
 
 
-@user_router.patch("/", response_model=UserDetail)
+@user_router.patch("/", response_model=UserCreate)
 def update_user(
     user_data: UserDetail,
     session: Session = Depends(get_session),
@@ -101,10 +101,15 @@ async def login_for_access_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@user_router.post("/profile", response_model=Profile)
+@user_router.post("/profile", response_model=Profile, status_code=201)
 async def create_user_profile(
-    profile_data: Profile,
+    profile: Profile,
     session: Session = Depends(get_session),
     username: str = Depends(get_current_username),
 ):
-    ...
+    user = session.scalars(select(User).where(User.username == username)).first()
+    profile.user_id = user.id
+    session.add(profile)
+    session.add(user)
+    session.commit()
+    return profile

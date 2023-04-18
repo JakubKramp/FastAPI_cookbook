@@ -12,23 +12,12 @@ class User(SQLModel, table=True):
     email: str = Field(sa_column=Column("email", String, unique=True))
     username: str = Field(sa_column=Column("username", String, unique=True))
     password: str
-    profile: Optional["Profile"] = Relationship(back_populates="user")
-    DRI: Optional["DietaryReferenceIntakes"] = Relationship(back_populates="user")
-
-
-class UserDetail(SQLModel):
-    email: str | None
-    password: str | None
-    username: str | None
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "email": "jeff.spicoli@labeouf.com",
-                "password": "hewillnotdivideus",
-                "username": "jeffS",
-            }
-        }
+    profile: Optional["Profile"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"uselist": False}
+    )
+    DRI: Optional["DietaryReferenceIntakes"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"uselist": False}
+    )
 
 
 class UserList(SQLModel):
@@ -46,15 +35,30 @@ class UserList(SQLModel):
         }
 
 
+class UserCreate(UserList):
+    password: str | None
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "email": "jeff.spicoli@labeouf.com",
+                "password": "hewillnotdivideus",
+                "username": "jeffS",
+            }
+        }
+
+
 class Profile(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     sex: Sex = Field(sa_column=Column(Enum(Sex)))
     activity_factor: ActivityFactor = Field(sa_column=Column(Enum(ActivityFactor)))
     age: int
     height: int
-    wight: int
+    weight: int
     smoking: bool
-    user: User | None = Relationship(back_populates="profile")
+    user: User | None = Relationship(
+        back_populates="profile", sa_relationship_kwargs={"uselist": False}
+    )
     user_id: int | None = Field(default=None, foreign_key="user.id")
 
     class Config:
@@ -85,7 +89,9 @@ class DietaryReferenceIntakes(SQLModel, table=True):
     fiber: int
     potassium: int
     sodium: int
-    user: User | None = Relationship(back_populates="DRI")
+    user: User | None = Relationship(
+        back_populates="DRI", sa_relationship_kwargs={"uselist": False}
+    )
     user_id: int | None = Field(default=None, foreign_key="user.id")
 
     class Config:
@@ -100,3 +106,7 @@ class DietaryReferenceIntakes(SQLModel, table=True):
                 "sodium": 2000,
             }
         }
+
+
+class UserDetail(UserList):
+    profile: Profile | None

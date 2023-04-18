@@ -38,11 +38,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 88
-extend-exclude = '''
-(
-migrations/
-)
-'''
+extend-exclude = ['migrations/']
 
 [tool.ruff]
 line-length = 88
