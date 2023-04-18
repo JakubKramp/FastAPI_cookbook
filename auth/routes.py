@@ -3,8 +3,7 @@ from datetime import timedelta
 from fastapi import APIRouter
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlmodel import Session, create_engine, select
-from passlib.context import CryptContext
+from sqlmodel import Session, select
 from starlette import status
 
 from app.security import (
@@ -15,12 +14,8 @@ from app.security import (
 )
 from auth.schemas import Token
 from config import settings
-from auth.models import User, UserDetail
+from auth.models import User, UserDetail, Profile, UserList
 from app.utils.db import get_session
-
-engine = create_engine(settings.DATABASE_URL, echo=True)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 user_router = APIRouter(prefix="/user", tags=["auth"])
 
@@ -45,7 +40,7 @@ def user_detail(user_id: int, session: Session = Depends(get_session)):
     return user
 
 
-@user_router.get("/me", response_model=UserDetail, status_code=200)
+@user_router.get("/me", response_model=UserList, status_code=200)
 def current_user(
     session: Session = Depends(get_session), user: str = Depends(get_current_username)
 ):
@@ -66,6 +61,8 @@ def update_user(
         raise HTTPException(status_code=404, detail="User not found")
     user_data = user_data.dict(exclude_unset=True)
     for key, value in user_data.items():
+        if key == "password":
+            value = get_password_hash(value)
         setattr(user, key, value)
     session.add(user)
     session.commit()
@@ -73,7 +70,7 @@ def update_user(
     return user
 
 
-@user_router.delete("/")
+@user_router.delete("/", status_code=204)
 def delete_user(
     session: Session = Depends(get_session), user: str = Depends(get_current_username)
 ):
@@ -102,3 +99,12 @@ async def login_for_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@user_router.post("/profile", response_model=Profile)
+async def create_user_profile(
+    profile_data: Profile,
+    session: Session = Depends(get_session),
+    username: str = Depends(get_current_username),
+):
+    ...

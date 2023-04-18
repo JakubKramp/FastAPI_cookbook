@@ -1,6 +1,7 @@
 from typing import Optional
 
 from sqlalchemy import String, Column, Enum
+from sqlalchemy.event import listens_for
 from sqlmodel import Field, SQLModel, Relationship
 
 from auth.enums import Sex, ActivityFactor
@@ -16,9 +17,9 @@ class User(SQLModel, table=True):
 
 
 class UserDetail(SQLModel):
-    email: str
-    password: str
-    username: str
+    email: str | None
+    password: str | None
+    username: str | None
 
     class Config:
         schema_extra = {
@@ -67,6 +68,12 @@ class Profile(SQLModel, table=True):
                 "smoking": True,
             }
         }
+
+
+@listens_for(Profile, "before_insert")
+def set_dietary_reference_intakes(mapper, connection, target):
+    # TODO: Create a function that scraps for DRI
+    ...
 
 
 class DietaryReferenceIntakes(SQLModel, table=True):
