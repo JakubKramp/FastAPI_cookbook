@@ -11,6 +11,9 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run:
+          name: build docker
+          command: dokcer-compose build
+      - run:
           name: Set up .env
           command: cp config/env.example config/.env
       - python/install-packages:
