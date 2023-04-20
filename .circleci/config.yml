@@ -16,7 +16,7 @@ jobs:
 
       - run:
           name: Run tests
-          command: pytest . --cov
+          command: poetry run pytest . --cov
 
 
 workflows:
