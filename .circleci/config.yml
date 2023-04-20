@@ -23,7 +23,7 @@ jobs:
           command: ls ./recipies/tests/ -la
       - run:
           name: Run tests
-          command: docker-compose run api pytest ./code
+          command: docker-compose run api pytest
 
 
 workflows:
