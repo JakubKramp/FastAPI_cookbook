@@ -13,10 +13,18 @@ class User(SQLModel, table=True):
     username: str = Field(sa_column=Column("username", String, unique=True))
     password: str
     profile: Optional["Profile"] = Relationship(
-        back_populates="user", sa_relationship_kwargs={"uselist": False}
+        back_populates="user",
+        sa_relationship_kwargs={
+            "uselist": False,
+            "cascade": "all,delete,delete-orphan",
+        },
     )
     DRI: Optional["DietaryReferenceIntakes"] = Relationship(
-        back_populates="user", sa_relationship_kwargs={"uselist": False}
+        back_populates="user",
+        sa_relationship_kwargs={
+            "uselist": False,
+            "cascade": "all,delete,delete-orphan",
+        },
     )
 
 
@@ -48,16 +56,20 @@ class UserCreate(UserList):
         }
 
 
-class Profile(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
+class UpdateProfile(SQLModel):
     sex: Sex = Field(sa_column=Column(Enum(Sex)))
     activity_factor: ActivityFactor = Field(sa_column=Column(Enum(ActivityFactor)))
     age: int
     height: int
     weight: int
     smoking: bool
+
+
+class Profile(UpdateProfile, table=True):
+    id: int | None = Field(default=None, primary_key=True)
     user: User | None = Relationship(
-        back_populates="profile", sa_relationship_kwargs={"uselist": False}
+        back_populates="profile",
+        sa_relationship_kwargs={"uselist": False},
     )
     user_id: int | None = Field(default=None, foreign_key="user.id")
 
@@ -67,7 +79,7 @@ class Profile(SQLModel, table=True):
                 "sex": Sex.male,
                 "age": 30,
                 "height": 180,
-                "wieght": 80,
+                "weight": 80,
                 "activity_factor": ActivityFactor.little,
                 "smoking": True,
             }

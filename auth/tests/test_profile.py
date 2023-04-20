@@ -84,4 +84,4 @@ def test_delete_user_and_profile(client: TestClient, session: Session, user: Use
     )
     assert session.query(func.count(Profile.id)).scalar() == 1
     client.delete("/user")
-    assert session.query(func.count(Profile.id)).scalar() == 1
+    assert session.query(func.count(Profile.id)).scalar() == 0

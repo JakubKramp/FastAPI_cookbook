@@ -14,14 +14,14 @@ from app.security import (
 )
 from auth.schemas import Token
 from config import settings
-from auth.models import User, UserDetail, Profile, UserCreate
+from auth.models import User, UserDetail, Profile, UserCreate, UpdateProfile
 from app.utils.db import get_session
 
 user_router = APIRouter(prefix="/user", tags=["auth"])
 
 
 @user_router.post("/", response_model=UserCreate, status_code=201)
-def sign_up(user: UserDetail, session: Session = Depends(get_session)):
+def sign_up(user: UserCreate, session: Session = Depends(get_session)):
     db_user = User(
         username=user.username,
         email=user.email,
@@ -45,7 +45,7 @@ def current_user(
     session: Session = Depends(get_session), user: str = Depends(get_current_username)
 ):
     authenticated_user = session.scalars(
-        select(User, Profile).join(Profile).where(User.username == user)
+        select(User).where(User.username == user)
     ).first()
     return authenticated_user
 
@@ -110,6 +110,25 @@ async def create_user_profile(
     user = session.scalars(select(User).where(User.username == username)).first()
     profile.user_id = user.id
     session.add(profile)
-    session.add(user)
     session.commit()
+    return profile
+
+
+@user_router.patch("/profile", response_model=Profile, status_code=201)
+async def update_user_profile(
+    profile_data: UpdateProfile,
+    session: Session = Depends(get_session),
+    username: str = Depends(get_current_username),
+):
+    profile = session.scalars(
+        select(Profile, User).join(Profile.user).where(User.username == username)
+    ).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="User not found")
+    profile_data = profile_data.dict(exclude_unset=True)
+    for key, value in profile_data.items():
+        setattr(profile, key, value)
+    session.add(profile)
+    session.commit()
+    session.refresh(profile)
     return profile
