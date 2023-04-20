@@ -10,7 +10,6 @@ from sqlmodel import select
 from auth.exceptions import credentials_exception
 from auth.models import User
 from config import settings
-from auth.schemas import TokenData
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
