@@ -23,7 +23,7 @@ jobs:
           command: docker-compose run api ls -la
       - run:
           name: Run tests
-          command: docker-compose -f docker-compose-ci.yml run api pytest ./recipies/tests/
+          command: docker-compose -f docker-compose-ci.yml run api pytest --create-db .
 
 
 workflows:
