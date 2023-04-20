@@ -12,7 +12,7 @@ jobs:
           pkg-manager: poetry
       - run:
           name: Static code analysis
-          command: poetry run ruff .
+          command: poetry run black -S . --check
 
       - run:
           name: Run tests
