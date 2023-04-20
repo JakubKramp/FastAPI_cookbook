@@ -11,11 +11,11 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run:
-          name: build docker
-          command: docker-compose build
-      - run:
           name: Set up .env
           command: cp config/env.example config/.env
+      - run:
+          name: build docker
+          command: docker-compose build
       - python/install-packages:
           pkg-manager: poetry
       - run:
