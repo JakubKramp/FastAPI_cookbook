@@ -18,7 +18,9 @@ jobs:
       - run:
           name: Static code analysis
           command: poetry run black -S . --check
-
+      - run:
+          name: Test
+          command: ls -la
       - run:
           name: Run tests
           command: docker-compose run api pytest .
