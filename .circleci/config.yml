@@ -8,6 +8,9 @@ jobs:
       - image: cimg/python:3.10.2
     steps:
       - checkout
+      - run:
+          name: Set up .env
+          command: cp config/env.example config/.env
       - python/install-packages:
           pkg-manager: poetry
       - run:
