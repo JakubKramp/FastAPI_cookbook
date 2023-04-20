@@ -20,7 +20,7 @@ jobs:
           command: poetry run black -S . --check
       - run:
           name: Test
-          command: ls -la
+          command: ls ./recipies/tests/ -la
       - run:
           name: Run tests
           command: docker-compose run api pytest .
