@@ -19,7 +19,7 @@ jobs:
 
       - run:
           name: Run tests
-          command: poetry run pytest . --cov
+          command: docker-compose run api pytest .
 
 
 workflows:
