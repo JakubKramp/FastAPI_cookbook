@@ -11,12 +11,12 @@ jobs:
       - python/install-packages:
           pkg-manager: poetry
       - run:
-          name: Run tests
-          command: pytest . --cov
-      - run:
           name: Static code analysis
           command: ruff .
 
+      - run:
+          name: Run tests
+          command: pytest . --cov
 
 
 workflows:
