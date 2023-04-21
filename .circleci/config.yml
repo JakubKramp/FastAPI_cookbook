@@ -1,0 +1,35 @@
+version: 2.1
+orbs:
+  python: circleci/python@1.5.0
+
+jobs:
+  build-and-test:
+    docker:
+      - image: cimg/python:3.10.2
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Set up .env
+          command: cp config/env.example config/.env
+      - run:
+          name: build docker
+          command: docker-compose build
+      - python/install-packages:
+          pkg-manager: poetry
+      - run:
+          name: Static code analysis
+          command: poetry run black -S . --check
+      - run:
+          name: Test
+          command: docker-compose run api ls -la
+      - run:
+          name: Run tests
+          command: docker-compose -f docker-compose-ci.yml run api pytest .
+
+
+workflows:
+  test:
+    jobs:
+      - build-and-test

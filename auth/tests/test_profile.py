@@ -18,7 +18,7 @@ def test_create_profile(client: TestClient, session: Session, user: User):
         "sex": Sex.male,
         "age": 30,
         "height": 180,
-        "wieght": 80,
+        "weight": 80,
         "activity_factor": ActivityFactor.little,
         "smoking": True,
     }
@@ -52,6 +52,17 @@ def test_update_profile(client: TestClient, session: Session, user: User):
     )
     token = response.json()["access_token"]
     profile = {
+        "sex": Sex.male,
+        "age": 30,
+        "height": 180,
+        "weight": 80,
+        "activity_factor": ActivityFactor.little,
+        "smoking": True,
+    }
+    response = client.post(
+        "/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"}
+    )
+    profile = {
         "sex": Sex.female,
         "age": 35,
     }
@@ -75,7 +86,7 @@ def test_delete_user_and_profile(client: TestClient, session: Session, user: Use
         "sex": Sex.male,
         "age": 30,
         "height": 180,
-        "wieght": 80,
+        "weight": 80,
         "activity_factor": ActivityFactor.little,
         "smoking": True,
     }
@@ -83,5 +94,7 @@ def test_delete_user_and_profile(client: TestClient, session: Session, user: Use
         "/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"}
     )
     assert session.query(func.count(Profile.id)).scalar() == 1
-    client.delete("/user")
+    assert session.query(func.count(User.id)).scalar() == 1
+    client.delete("/user", headers={"Authorization": f"Bearer {token}"})
+    assert session.query(func.count(User.id)).scalar() == 0
     assert session.query(func.count(Profile.id)).scalar() == 0

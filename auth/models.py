@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import String, Column, Enum
+from sqlalchemy import String, Column
 from sqlalchemy.event import listens_for
 from sqlmodel import Field, SQLModel, Relationship
 
@@ -23,21 +23,33 @@ class User(SQLModel, table=True):
         back_populates="user",
         sa_relationship_kwargs={
             "uselist": False,
-            "cascade": "all,delete,delete-orphan",
         },
     )
 
 
 class UserList(SQLModel):
-    id: int
     email: str
     username: str
 
     class Config:
         schema_extra = {
             "example": {
-                "id": 1,
                 "email": "jeff.spicoli@labeouf.com",
+                "username": "jeffS",
+            }
+        }
+
+
+class UserUpdate(SQLModel):
+    email: str | None
+    username: str | None
+    password: str | None
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "email": "jeff.spicoli@labeouf.com",
+                "password": "hewillnotdivideus",
                 "username": "jeffS",
             }
         }
@@ -57,15 +69,24 @@ class UserCreate(UserList):
 
 
 class UpdateProfile(SQLModel):
-    sex: Sex = Field(sa_column=Column(Enum(Sex)))
-    activity_factor: ActivityFactor = Field(sa_column=Column(Enum(ActivityFactor)))
+    sex: Sex | None
+    activity_factor: ActivityFactor | None
+    age: int | None
+    height: int | None
+    weight: int | None
+    smoking: bool | None
+
+
+class BaseProfile(SQLModel):
+    sex: Sex
+    activity_factor: ActivityFactor
     age: int
     height: int
     weight: int
     smoking: bool
 
 
-class Profile(UpdateProfile, table=True):
+class Profile(BaseProfile, table=True):
     id: int | None = Field(default=None, primary_key=True)
     user: User | None = Relationship(
         back_populates="profile",

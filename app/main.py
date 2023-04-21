@@ -17,4 +17,5 @@ def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
 
 
-create_db_and_tables()
+if __name__ == "__main__":
+    create_db_and_tables()

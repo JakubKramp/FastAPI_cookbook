@@ -1,5 +1,4 @@
 import pytest
-
 from sqlalchemy_utils import create_database, drop_database
 from sqlmodel import create_engine, SQLModel, Session
 from starlette.testclient import TestClient
