@@ -14,7 +14,7 @@ from app.security import (
 )
 from auth.schemas import Token
 from config import settings
-from auth.models import User, UserDetail, Profile, UserCreate, UpdateProfile
+from auth.models import User, UserDetail, Profile, UserCreate, UpdateProfile, UserUpdate
 from app.utils.db import get_session
 
 user_router = APIRouter(prefix="/user", tags=["auth"])
@@ -52,7 +52,7 @@ def current_user(
 
 @user_router.patch("/", response_model=UserCreate)
 def update_user(
-    user_data: UserDetail,
+    user_data: UserUpdate,
     session: Session = Depends(get_session),
     user: str = Depends(get_current_username),
 ):
@@ -114,7 +114,7 @@ async def create_user_profile(
     return profile
 
 
-@user_router.patch("/profile", response_model=Profile, status_code=201)
+@user_router.patch("/profile", response_model=Profile, status_code=200)
 async def update_user_profile(
     profile_data: UpdateProfile,
     session: Session = Depends(get_session),
