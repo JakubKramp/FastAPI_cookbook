@@ -57,8 +57,8 @@ class UserCreate(UserList):
 
 
 class UpdateProfile(SQLModel):
-    sex: str = Field(sa_column=Column(Enum(Sex), type_=str))
-    activity_factor: str = Field(sa_column=Column(Enum(ActivityFactor), type_=str))
+    sex: str = Field(sa_column=Column(Enum(Sex)))
+    activity_factor: str = Field(sa_column=Column(Enum(ActivityFactor)))
     age: int
     height: int
     weight: int
