@@ -1,12 +1,10 @@
 import pytest
-from sqlalchemy import Column, create_engine, Enum, text
 from sqlalchemy_utils import create_database, drop_database
 from sqlmodel import create_engine, SQLModel, Session
 from starlette.testclient import TestClient
 
 from app.main import app
 from app.utils.db import get_session
-from auth.enums import Sex
 from config import settings
 
 

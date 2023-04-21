@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import String, Column, Enum
+from sqlalchemy import String, Column
 from sqlalchemy.event import listens_for
 from sqlmodel import Field, SQLModel, Relationship
 
