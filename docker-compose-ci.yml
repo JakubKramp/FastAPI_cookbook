@@ -18,5 +18,3 @@ services:
       - config/.env
     ports:
           - "5431:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
