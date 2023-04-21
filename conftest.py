@@ -18,7 +18,6 @@ def db_engine():
 
 @pytest.fixture(name="db", scope="session", autouse=True)
 def database_setup(engine):
-    drop_database(engine.url)
     create_database(engine.url)
     SQLModel.metadata.create_all(engine)
     yield
