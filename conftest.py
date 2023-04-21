@@ -11,7 +11,7 @@ from config import settings
 
 @pytest.fixture(name="engine", scope="session")
 def db_engine():
-    engine = create_engine(settings.TEST_DATABASE_URL)
+    engine = create_engine(settings.TEST_DATABASE_URL, echo=True)
     yield engine
 
 
