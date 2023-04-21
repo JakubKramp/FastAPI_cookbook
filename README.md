@@ -36,4 +36,12 @@ User can add notes only visible to him to a dish.
 
 User can add dish to favorites.
 
+Implement a meal planner feature that allows users to plan out their meals for the week or month and generate a shopping list based on the ingredients needed for their chosen recipes.
 
+Allow users to create and share their own recipe collections.
+
+Implement a feature that allows users to convert ingredient measurements and temperatures between metric and imperial units, depending on their preferences.
+
+Add support for international cuisines, and allow users to filter recipes by country or region.
+
+Implement a feature that allows users to import recipes from external sources, such as food blogs or recipe websites, and automatically parse the ingredients and instructions into your app's data model.
