@@ -108,6 +108,10 @@ async def create_user_profile(
     username: str = Depends(get_current_username),
 ):
     user = session.scalars(select(User).where(User.username == username)).first()
+    if db_profile := session.scalars(
+        select(Profile).where(Profile.user == user)
+    ).first():
+        return db_profile
     profile.user_id = user.id
     session.add(profile)
     session.commit()

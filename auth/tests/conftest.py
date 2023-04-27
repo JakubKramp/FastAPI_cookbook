@@ -1,5 +1,5 @@
 import pytest
-
+import scrap
 from app.security import get_password_hash
 from auth.models import User
 
@@ -14,3 +14,8 @@ def create_user_fixture(session):
     session.add(user)
     session.commit()
     return user
+
+
+@pytest.fixture(scope="function", autouse=True)
+def mock_selenium_api(monkeypatch):
+    monkeypatch.setattr(scrap.Scrapper, "get_DRI", lambda x: None)
