@@ -2,7 +2,6 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
 
-from auth.enums import Sex, ActivityFactor
 from auth.models import Profile, User
 
 
@@ -15,11 +14,11 @@ def test_create_profile(client: TestClient, session: Session, user: User):
     )
     token = response.json()["access_token"]
     profile = {
-        "sex": Sex.male,
+        "sex": "male",
         "age": 30,
         "height": 180,
         "weight": 80,
-        "activity_factor": ActivityFactor.little,
+        "activity_factor": "Little/no exercise",
         "smoking": True,
     }
     response = client.post(
@@ -31,11 +30,11 @@ def test_create_profile(client: TestClient, session: Session, user: User):
 
 def test_create_profile_unauthorized(client: TestClient, session: Session):
     profile = {
-        "sex": Sex.male,
+        "sex": "male",
         "age": 30,
         "height": 180,
         "wieght": 80,
-        "activity_factor": ActivityFactor.little,
+        "activity_factor": "Little/no exercise",
         "smoking": True,
     }
     response = client.post("/user/profile", json=profile)
@@ -52,25 +51,25 @@ def test_update_profile(client: TestClient, session: Session, user: User):
     )
     token = response.json()["access_token"]
     profile = {
-        "sex": Sex.male,
+        "sex": "male",
         "age": 30,
         "height": 180,
         "weight": 80,
-        "activity_factor": ActivityFactor.little,
+        "activity_factor": "Little/no exercise",
         "smoking": True,
     }
     response = client.post(
         "/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"}
     )
     profile = {
-        "sex": Sex.female,
+        "sex": "female",
         "age": 35,
     }
     response = client.patch(
         "/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"}
     )
     assert response.status_code == 200
-    assert response.json()["sex"] == Sex.female
+    assert response.json()["sex"] == "female"
     assert response.json()["age"] == 35
 
 
@@ -83,11 +82,11 @@ def test_delete_user_and_profile(client: TestClient, session: Session, user: Use
     )
     token = response.json()["access_token"]
     profile = {
-        "sex": Sex.male,
+        "sex": "male",
         "age": 30,
         "height": 180,
         "weight": 80,
-        "activity_factor": ActivityFactor.little,
+        "activity_factor": "Little/no exercise",
         "smoking": True,
     }
     client.post(

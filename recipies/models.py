@@ -1,11 +1,10 @@
 from typing import Optional, List
 
-import requests
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.event import listens_for
 from sqlmodel import Field, SQLModel, Relationship
-from config import settings
 from recipies.tests.test_data import example_ingredient
+from recipies.utils import NutritionalAPIClient
 
 
 class NutritionalValues(SQLModel):
@@ -96,14 +95,8 @@ class UpdateIngredient(ListIngredient):
 
 @listens_for(Ingredient, "before_insert")
 def set_nutritional_values(mapper, connection, target):
-    response = requests.get(
-        settings.NUTRITION_API_URL,
-        params={"query": target.name},
-        headers={"X-Api-Key": settings.NUTRITION_APIKEY},
-    )
-    nutrition_data = response.json()[0]
-    nutrition_data.pop("name", None)
-    nutrition_data.pop("serving_size_g", None)
+    client = NutritionalAPIClient()
+    nutrition_data = client.get_nutritional_values(target)
     for key, value in nutrition_data.items():
         if key.find("_") >= 0:
             key = "_".join(key.split("_")[:-1])

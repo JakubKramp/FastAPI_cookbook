@@ -10,7 +10,7 @@ app = FastAPI()
 app.include_router(user_router)
 app.include_router(ingredient_router)
 
-engine = create_engine(settings.DATABASE_URL, echo=True)
+engine = create_engine(settings.DATABASE_URL)
 
 
 def create_db_and_tables():

@@ -13,9 +13,7 @@ example_ingredient = {
 }
 example_ingredient_api_response = [
     {
-        "name": "carrot",
         "calories": 34,
-        "serving_size_g": 100,
         "fat_total_g": 0.2,
         "fat_saturated_g": 0,
         "protein_g": 0.8,

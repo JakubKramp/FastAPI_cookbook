@@ -4,7 +4,7 @@ from sqlalchemy import String, Column
 from sqlalchemy.event import listens_for
 from sqlmodel import Field, SQLModel, Relationship
 
-from auth.enums import Sex, ActivityFactor
+from scrap import Scrapper
 
 
 class User(SQLModel, table=True):
@@ -17,12 +17,6 @@ class User(SQLModel, table=True):
         sa_relationship_kwargs={
             "uselist": False,
             "cascade": "all,delete,delete-orphan",
-        },
-    )
-    DRI: Optional["DietaryReferenceIntakes"] = Relationship(
-        back_populates="user",
-        sa_relationship_kwargs={
-            "uselist": False,
         },
     )
 
@@ -69,8 +63,8 @@ class UserCreate(UserList):
 
 
 class UpdateProfile(SQLModel):
-    sex: Sex | None
-    activity_factor: ActivityFactor | None
+    sex: str | None
+    activity_factor: str | None
     age: int | None
     height: int | None
     weight: int | None
@@ -78,15 +72,25 @@ class UpdateProfile(SQLModel):
 
 
 class BaseProfile(SQLModel):
-    sex: Sex
-    activity_factor: ActivityFactor
+    sex: str
+    activity_factor: str | None
     age: int
     height: int
     weight: int
     smoking: bool
 
 
-class Profile(BaseProfile, table=True):
+class DietaryReferenceIntakes(SQLModel):
+    calories: int | None
+    carbohydrates: int | None
+    fat: int | None
+    protein: int | None
+    fiber: int | None
+    potassium: int | None
+    sodium: int | None
+
+
+class Profile(BaseProfile, DietaryReferenceIntakes, table=True):
     id: int | None = Field(default=None, primary_key=True)
     user: User | None = Relationship(
         back_populates="profile",
@@ -97,11 +101,11 @@ class Profile(BaseProfile, table=True):
     class Config:
         schema_extra = {
             "example": {
-                "sex": Sex.male,
+                "sex": "male",
                 "age": 30,
                 "height": 180,
                 "weight": 80,
-                "activity_factor": ActivityFactor.little,
+                "activity_factor": "Little/no exercise",
                 "smoking": True,
             }
         }
@@ -109,36 +113,7 @@ class Profile(BaseProfile, table=True):
 
 @listens_for(Profile, "before_insert")
 def set_dietary_reference_intakes(mapper, connection, target):
-    # TODO: Create a function that scraps for DRI
-    ...
-
-
-class DietaryReferenceIntakes(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    calories: int
-    carbohydrates: int
-    fat: int
-    protein: int
-    fiber: int
-    potassium: int
-    sodium: int
-    user: User | None = Relationship(
-        back_populates="DRI", sa_relationship_kwargs={"uselist": False}
-    )
-    user_id: int | None = Field(default=None, foreign_key="user.id")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "calories": 2000,
-                "carbohydrates": 200,
-                "fat": 50,
-                "protein": 70,
-                "fiber": 30,
-                "potassium": 600,
-                "sodium": 2000,
-            }
-        }
+    Scrapper.get_DRI(target)
 
 
 class UserDetail(UserList):
