@@ -5,6 +5,8 @@ from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 from starlette import status
+from starlette.requests import Request
+
 
 from app.security import (
     authenticate_user,
@@ -35,19 +37,15 @@ def sign_up(user: UserCreate, session: Session = Depends(get_session)):
 @user_router.get("/", response_model=UserDetail, status_code=200)
 def user_detail(user_id: int, session: Session = Depends(get_session)):
     user = session.get(User, user_id)
+    print(user)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
 
 @user_router.get("/me", response_model=UserDetail, status_code=200)
-def current_user(
-    session: Session = Depends(get_session), user: str = Depends(get_current_username)
-):
-    authenticated_user = session.scalars(
-        select(User).where(User.username == user)
-    ).first()
-    return authenticated_user
+def current_user(request: Request):
+    return request.user
 
 
 @user_router.patch("/", response_model=UserCreate)
