@@ -22,6 +22,7 @@ class User(SQLModel, table=True):
 
 
 class UserList(SQLModel):
+    id: int
     email: str
     username: str
 
