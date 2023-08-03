@@ -117,4 +117,5 @@ def set_dietary_reference_intakes(mapper, connection, target):
 
 
 class UserDetail(UserList):
+    id: int
     profile: Profile | None

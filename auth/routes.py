@@ -3,6 +3,7 @@ from datetime import timedelta
 from fastapi import APIRouter
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 from starlette import status
 
@@ -14,21 +15,32 @@ from app.security import (
 )
 from auth.schemas import Token
 from config import settings
-from auth.models import User, UserDetail, Profile, UserCreate, UpdateProfile, UserUpdate
+from auth.models import (
+    User,
+    UserDetail,
+    Profile,
+    UserCreate,
+    UpdateProfile,
+    UserUpdate,
+    UserList,
+)
 from app.utils.db import get_session
 
 user_router = APIRouter(prefix="/user", tags=["auth"])
 
 
-@user_router.post("/", response_model=UserCreate, status_code=201)
+@user_router.post("/", response_model=UserDetail, status_code=201)
 def sign_up(user: UserCreate, session: Session = Depends(get_session)):
     db_user = User(
         username=user.username,
         email=user.email,
         password=get_password_hash(user.password),
     )
-    session.add(db_user)
-    session.commit()
+    try:
+        session.add(db_user)
+        session.commit()
+    except IntegrityError:
+        raise HTTPException(status_code=409, detail="Username/email already taken")
     return db_user
 
 
