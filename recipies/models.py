@@ -1,8 +1,11 @@
+from datetime import datetime
 from typing import Optional, List
 
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.event import listens_for
 from sqlmodel import Field, SQLModel, Relationship
+
+from auth.models import User
 from recipies.tests.test_data import example_ingredient
 from recipies.utils import NutritionalAPIClient
 
@@ -214,7 +217,7 @@ class DishDetail(ListDish):
 
 class IngredientItem(SQLModel, table=True):
     """
-    This model is a proxy between Ingredient and Recipe, allowing us to set amount of produce for each dish.
+    This model is a proxy between Ingredient and Dish, allowing us to set amount of produce for each dish.
     Amount is in grams.
     """
 
@@ -224,3 +227,30 @@ class IngredientItem(SQLModel, table=True):
     dish_id: Optional[int] = Field(default=None, foreign_key="dish.id")
     dish: Optional[Dish] = Relationship(back_populates="ingredients")
     amount: int
+
+
+class FridgeIngredient(SQLModel, table=True):
+    """
+    This model is a proxy between Ingredient and Fridge, allowing us to set amount of produce user has on hand.
+    Amount is in grams.
+    """
+
+    ingredient_id: Optional[int] = Field(default=None, foreign_key="ingredient.id")
+    ingredient: Optional["Ingredient"] = Relationship(
+        back_populates="fridge_ingredients"
+    )
+    fridge_id: Optional[int] = Field(default=None, foreign_key="fridge.id")
+    fridge: Optional[Dish] = Relationship(back_populates="ingredients")
+    expiration_date: datetime = Field(default_factory=datetime.utcnow(), nullable=False)
+    amount: int
+
+
+class Fridge(SQLModel, table=True):
+    """
+    Model used for keeping ingredients user has access to, used to recommend dishes user can prepare, with what he has on hand.
+    """
+
+    id: int | None = Field(default=None, primary_key=True)
+    ingredients: List["FridgeIngredient"] = Relationship(back_populates="fridge")
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    user: User = Relationship(back_populates="fridge")
