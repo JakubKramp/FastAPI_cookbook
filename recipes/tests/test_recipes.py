@@ -1,30 +1,31 @@
 from fastapi.testclient import TestClient
-from requests import Session
+from sqlmodel import Session
 from sqlalchemy import func
 
-from recipies.models import Ingredient, CreateIngredient, Dish, IngredientItem
+from recipes.models import Ingredient, CreateIngredient, Dish, IngredientItem
 
 
 def test_create_ingredient(
+    session: Session,
     client: TestClient,
     ingredient: Ingredient,
 ):
     response = client.post("/ingredients/", json={"name": "carrot"})
-    data = response.json()
-    data.pop("id")
+    ingredient_data = session.query(Ingredient).first()
+    ingredient['id'] = ingredient_data.id
+
     assert response.status_code == 201
-    assert data == ingredient
+    assert ingredient_data == Ingredient.parse_obj(ingredient)
 
 
 def test_get_ingredient(session: Session, client: TestClient, ingredient: Ingredient):
-    db_ingredient = Ingredient.from_orm(CreateIngredient(name="carrot"))
-    session.add(db_ingredient)
-    session.commit()
+    client.post("/ingredients/", json={"name": ingredient['name']})
     response = client.get("/ingredients/1")
-    data = response.json()
-    data.pop("id")
+    ingredient_data = session.query(Ingredient).first()
+    ingredient['id'] = ingredient_data.id
+
     assert response.status_code == 200
-    assert data == ingredient
+    assert ingredient_data == Ingredient.parse_obj(ingredient)
 
 
 def test_get_ingredient_does_not_exist(client: TestClient):

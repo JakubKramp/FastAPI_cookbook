@@ -1,9 +1,8 @@
 from typing import Optional, List
 
 from sqlalchemy import UniqueConstraint
-from sqlalchemy.event import listens_for
 from sqlmodel import Field, SQLModel, Relationship
-from recipies.tests.test_data import example_ingredient
+from recipes.tests.test_data import example_ingredient
 
 
 class NutritionalValues(SQLModel):

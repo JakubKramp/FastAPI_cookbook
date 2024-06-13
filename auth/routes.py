@@ -22,7 +22,6 @@ from auth.models import (
     UserCreate,
     UpdateProfile,
     UserUpdate,
-    UserList,
 )
 from app.utils.db import get_session
 

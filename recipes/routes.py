@@ -4,7 +4,7 @@ from sqlalchemy import func
 from sqlmodel import Session
 from starlette.responses import JSONResponse
 
-from recipies.models import (
+from recipes.models import (
     CreateIngredient,
     Ingredient,
     ListIngredient,
@@ -17,7 +17,7 @@ from recipies.models import (
     NutritionalValues,
 )
 from app.utils.db import get_session
-from recipies.tasks import get_nutritional_values
+from recipes.tasks import get_nutritional_values
 
 ingredient_router = APIRouter(prefix="/ingredients", tags=["ingredients"])
 
