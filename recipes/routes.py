@@ -24,7 +24,9 @@ ingredient_router = APIRouter(prefix="/ingredients", tags=["ingredients"])
 
 @ingredient_router.post("/", response_model=Ingredient, status_code=201)
 async def create_ingredient(
-    ingredient: CreateIngredient, background_tasks: BackgroundTasks, session: Session = Depends(get_session)
+    ingredient: CreateIngredient,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(get_session),
 ):
     ingredient = Ingredient.from_orm(ingredient)
     background_tasks.add_task(get_nutritional_values, ingredient, session)
@@ -77,9 +79,7 @@ def delete_ingredient(ingredient_id: int, session: Session = Depends(get_session
         raise HTTPException(status_code=404, detail="Ingredient not found")
     session.delete(ingredient)
     session.commit()
-    return JSONResponse(
-        content={"message": f"Ingredient {ingredient_id} deleted"}, status_code=204
-    )
+    return JSONResponse(content={"message": f"Ingredient {ingredient_id} deleted"}, status_code=204)
 
 
 @ingredient_router.post(
@@ -104,9 +104,7 @@ def create_dish(dish_data: CreateDish, session: Session = Depends(get_session)):
     session.refresh(dish)
     for ingredient in ingredients:
         i = session.scalars(
-            select(Ingredient).where(
-                Ingredient.name == ingredient["ingredient"]["name"].lower()
-            )
+            select(Ingredient).where(Ingredient.name == ingredient["ingredient"]["name"].lower())
         ).first()
         if not i:
             i = Ingredient(name=ingredient["ingredient"]["name"].lower())

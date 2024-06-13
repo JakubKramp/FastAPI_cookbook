@@ -90,6 +90,7 @@ class UpdateIngredient(ListIngredient):
     class Config:
         schema_extra = {"example": example_ingredient}
 
+
 # Currently SQLAlchemy does not support async event handling,
 # thats why setting nutritional values is currently done in the Background Tasks
 # @listens_for(Ingredient, "before_insert")
