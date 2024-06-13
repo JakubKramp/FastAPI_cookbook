@@ -1,5 +1,4 @@
-from fastapi import APIRouter
-from fastapi import HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy import func
 from sqlmodel import Session
@@ -18,18 +17,17 @@ from recipies.models import (
     NutritionalValues,
 )
 from app.utils.db import get_session
+from recipies.tasks import get_nutritional_values
 
 ingredient_router = APIRouter(prefix="/ingredients", tags=["ingredients"])
 
 
 @ingredient_router.post("/", response_model=Ingredient, status_code=201)
-def create_ingredient(
-    ingredient: CreateIngredient, session: Session = Depends(get_session)
+async def create_ingredient(
+    ingredient: CreateIngredient, background_tasks: BackgroundTasks, session: Session = Depends(get_session)
 ):
     ingredient = Ingredient.from_orm(ingredient)
-    session.add(ingredient)
-    session.commit()
-    session.refresh(ingredient)
+    background_tasks.add_task(get_nutritional_values, ingredient, session)
     return ingredient
 
 
