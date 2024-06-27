@@ -17,11 +17,9 @@ def get_example_ingredient(*args, **kwargs):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def mock_nutrition_api(monkeypatch):
-    monkeypatch.setattr(
-        "recipes.tasks.get_nutritional_values",
-        lambda x, y: get_example_ingredient(),
-    )
+def mock_nutrition_api(mocker):
+    mocker.patch("recipes.routes.get_nutritional_values",
+               return_value=get_example_ingredient())
 
 
 @pytest.fixture(name="create_dish")
