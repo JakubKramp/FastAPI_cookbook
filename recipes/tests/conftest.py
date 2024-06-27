@@ -9,7 +9,7 @@ from recipes.tests.test_data import (
 
 @pytest.fixture(name="ingredient")
 def ingredient_fixture():
-    return example_ingredient
+    return example_ingredient.copy()
 
 
 def get_example_ingredient(*args, **kwargs):

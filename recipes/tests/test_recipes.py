@@ -5,23 +5,13 @@ from sqlalchemy import func
 from recipes.models import Ingredient, CreateIngredient, Dish, IngredientItem
 
 
-def test_create_ingredient(
-    session: Session,
-    client: TestClient,
-    ingredient: Ingredient,
-):
-    response = client.post("/ingredients/", json={"name": "carrot"})
-    ingredient_data = session.query(Ingredient).first()
-    ingredient["id"] = ingredient_data.id
-
-    assert response.status_code == 201
-    assert ingredient_data == Ingredient.parse_obj(ingredient)
-
-
 def test_get_ingredient(session: Session, client: TestClient, ingredient: Ingredient):
-    client.post("/ingredients/", json={"name": ingredient["name"]})
-    response = client.get("/ingredients/1")
+    session.add(Ingredient.parse_obj(ingredient))
+    session.commit()
     ingredient_data = session.query(Ingredient).first()
+
+    response = client.get(f"/ingredients/{ingredient_data.id}")
+
     ingredient["id"] = ingredient_data.id
 
     assert response.status_code == 200

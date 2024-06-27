@@ -17,5 +17,6 @@ async def get_nutritional_values(ingredient, session):
             if key.find("_") >= 0:
                 key = "_".join(key.split("_")[:-1])
             ingredient.__setattr__(key, value)
+        ingredient.name = ingredient.name.lower()
         session.add(ingredient)
         session.commit()

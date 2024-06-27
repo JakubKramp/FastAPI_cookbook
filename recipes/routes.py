@@ -28,6 +28,8 @@ async def create_ingredient(
     background_tasks: BackgroundTasks,
     session: Session = Depends(get_session),
 ):
+    if session.query(Ingredient).filter_by(name=ingredient.name.lower()).first():
+        return HTTPException(409, "Item with this name already exists")
     ingredient = Ingredient.from_orm(ingredient)
     background_tasks.add_task(get_nutritional_values, ingredient, session)
     return ingredient
