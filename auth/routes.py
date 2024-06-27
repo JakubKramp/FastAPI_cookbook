@@ -11,17 +11,17 @@ from app.security import (
     authenticate_user,
     create_access_token,
     get_password_hash,
-    get_current_username,
+    get_current_user,
 )
 from auth.schemas import Token
-from config import settings
+from config.settings import Settings
 from auth.models import (
     User,
     UserDetail,
     Profile,
     UserCreate,
     UpdateProfile,
-    UserUpdate,
+    UserUpdate, UserList,
 )
 from app.utils.db import get_session
 
@@ -52,21 +52,21 @@ def user_detail(user_id: int, session: Session = Depends(get_session)):
 
 
 @user_router.get("/me", response_model=UserDetail, status_code=200)
-def current_user(session: Session = Depends(get_session), user: str = Depends(get_current_username)):
-    authenticated_user = session.scalars(select(User).where(User.username == user)).first()
+def current_user(session: Session = Depends(get_session), user: str = Depends(get_current_user)):
+    authenticated_user = session.scalars(select(User).where(User.id == int(user))).first()
     return authenticated_user
 
 
-@user_router.patch("/", response_model=UserCreate)
+@user_router.patch("/", response_model=UserList)
 def update_user(
     user_data: UserUpdate,
     session: Session = Depends(get_session),
-    user: str = Depends(get_current_username),
+    user: str = Depends(get_current_user),
 ):
-    user = session.scalars(select(User).where(User.username == user)).first()
+    user = session.scalars(select(User).where(User.id == int(user))).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    user_data = user_data.dict(exclude_unset=True)
+    user_data = user_data.model_dump(exclude_unset=True)
     for key, value in user_data.items():
         if key == "password":
             value = get_password_hash(value)
@@ -78,7 +78,7 @@ def update_user(
 
 
 @user_router.delete("/", status_code=204)
-def delete_user(session: Session = Depends(get_session), user: str = Depends(get_current_username)):
+def delete_user(session: Session = Depends(get_session), user: str = Depends(get_current_user)):
     user = session.scalars(select(User).where(User.username == user)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -99,8 +99,8 @@ async def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
+    access_token_expires = timedelta(minutes=Settings().ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(data={"sub": str(user.id)}, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -108,9 +108,9 @@ async def login_for_access_token(
 async def create_user_profile(
     profile: Profile,
     session: Session = Depends(get_session),
-    username: str = Depends(get_current_username),
+    user: str = Depends(get_current_user),
 ):
-    user = session.scalars(select(User).where(User.username == username)).first()
+    user = session.scalars(select(User).where(User == user)).first()
     if db_profile := session.scalars(select(Profile).where(Profile.user == user)).first():
         return db_profile
     profile.user_id = user.id
@@ -123,7 +123,7 @@ async def create_user_profile(
 async def update_user_profile(
     profile_data: UpdateProfile,
     session: Session = Depends(get_session),
-    username: str = Depends(get_current_username),
+    username: str = Depends(get_current_user),
 ):
     profile = session.scalars(
         select(Profile, User).join(Profile.user).where(User.username == username)

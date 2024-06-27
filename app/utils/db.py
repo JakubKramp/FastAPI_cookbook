@@ -1,9 +1,9 @@
 from sqlmodel import Session, create_engine
 
-from config import settings
+from config.settings import Settings
 
 
-engine = create_engine(settings.DATABASE_URL, echo=True)
+engine = create_engine(Settings().DATABASE_URL, echo=True)
 
 
 def get_session():

@@ -35,9 +35,9 @@ class UserList(SQLModel):
 
 
 class UserUpdate(SQLModel):
-    email: str | None
-    username: str | None
-    password: str | None
+    email: str | None = None
+    username: str | None = None
+    password: str | None = None
 
     class Config:
         schema_extra = {

@@ -9,7 +9,7 @@ from sqlmodel import select
 
 from auth.exceptions import credentials_exception
 from auth.models import User
-from config import settings
+from config.settings import Settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -43,16 +43,16 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, Settings().SECRET_KEY, algorithm=Settings().ALGORITHM)
     return encoded_jwt
 
 
-async def get_current_username(token: str = Depends(oauth2_scheme)):
+async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        payload = jwt.decode(token, Settings().SECRET_KEY, algorithms=[Settings().ALGORITHM])
+        user: str = payload.get("sub")
+        if user is None:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    return username
+    return user

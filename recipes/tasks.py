@@ -1,14 +1,14 @@
 import httpx
 
-from config import settings
+from config.settings import Settings
 
 
 async def get_nutritional_values(ingredient, session):
     async with httpx.AsyncClient() as client:
         response = await client.get(
-            settings.NUTRITION_API_URL,
+            Settings().NUTRITION_API_URL,
             params={"query": ingredient.name},
-            headers={"X-Api-Key": settings.NUTRITION_APIKEY},
+            headers={"X-Api-Key": Settings().NUTRITION_APIKEY},
         )
         nutrition_data = response.json()[0]
         nutrition_data.pop("name", None)

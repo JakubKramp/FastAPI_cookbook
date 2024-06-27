@@ -5,12 +5,12 @@ from starlette.testclient import TestClient
 
 from app.main import app
 from app.utils.db import get_session
-from config import settings
+from config.settings import Settings
 
 
 @pytest.fixture(name="engine", scope="session")
 def db_engine():
-    engine = create_engine(settings.TEST_DATABASE_URL)
+    engine = create_engine(Settings().TEST_DATABASE_URL)
     yield engine
 
 

@@ -56,7 +56,7 @@ def test_update_profile(client: TestClient, session: Session, user: User):
         "activity_factor": "Little/no exercise",
         "smoking": True,
     }
-    response = client.post("/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"})
+    client.post("/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"})
     profile = {
         "sex": "female",
         "age": 35,
