@@ -41,22 +41,16 @@ class Scrapper:
     def get_DRI(profile):
         op = webdriver.ChromeOptions()
         op.add_argument("headless")
-        driver = webdriver.Chrome(
-            executable_path="opt/selenium/chromedriver", options=op
-        )
+        driver = webdriver.Chrome(executable_path="opt/selenium/chromedriver", options=op)
         driver.get(url)
         time.sleep(2)
         sex_choice = driver.find_element(value="react-select-2--value-item")
         driver.execute_script(f'arguments[0].innerHTML = "{profile.sex}";', sex_choice)
         age_choice = driver.find_element(value="react-select-3--value-item")
-        driver.execute_script(
-            f'arguments[0].innerHTML = "{Scrapper.get_age(profile.age)}";', age_choice
-        )
+        driver.execute_script(f'arguments[0].innerHTML = "{Scrapper.get_age(profile.age)}";', age_choice)
         time.sleep(2)
         try:
-            button = driver.find_elements(
-                by="css selector", value="[class=fc-button-label]"
-            )
+            button = driver.find_elements(by="css selector", value="[class=fc-button-label]")
             button[0].click()
         except Exception:
             pass
@@ -65,9 +59,7 @@ class Scrapper:
         elems = driver.find_elements(by="css selector", value="[aria-label=Height]")
         elems[0].send_keys(profile.height)
         activity_choice = driver.find_element(value="react-select-6--value-item")
-        driver.execute_script(
-            f'arguments[0].innerHTML = "{profile.activity_factor}";', activity_choice
-        )
+        driver.execute_script(f'arguments[0].innerHTML = "{profile.activity_factor}";', activity_choice)
         smoking_choice = driver.find_element(value="react-select-7--value-item")
         driver.execute_script('arguments[0].innerHTML = "true";', smoking_choice)
         time.sleep(2)

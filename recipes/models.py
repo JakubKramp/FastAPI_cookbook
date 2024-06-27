@@ -1,10 +1,8 @@
 from typing import Optional, List
 
 from sqlalchemy import UniqueConstraint
-from sqlalchemy.event import listens_for
 from sqlmodel import Field, SQLModel, Relationship
-from recipies.tests.test_data import example_ingredient
-from recipies.utils import NutritionalAPIClient
+from recipes.tests.test_data import example_ingredient
 
 
 class NutritionalValues(SQLModel):
@@ -93,14 +91,16 @@ class UpdateIngredient(ListIngredient):
         schema_extra = {"example": example_ingredient}
 
 
-@listens_for(Ingredient, "before_insert")
-def set_nutritional_values(mapper, connection, target):
-    client = NutritionalAPIClient()
-    nutrition_data = client.get_nutritional_values(target)
-    for key, value in nutrition_data.items():
-        if key.find("_") >= 0:
-            key = "_".join(key.split("_")[:-1])
-        target.__setattr__(key, value)
+# Currently SQLAlchemy does not support async event handling,
+# thats why setting nutritional values is currently done in the Background Tasks
+# @listens_for(Ingredient, "before_insert")
+# async def set_nutritional_values(mapper, connection, target):
+#     client = NutritionalAPIClient()
+#     nutrition_data = await client.get_nutritional_values(target)
+#     for key, value in nutrition_data.items():
+#         if key.find("_") >= 0:
+#             key = "_".join(key.split("_")[:-1])
+#         target.__setattr__(key, value)
 
 
 class Dish(SQLModel, table=True):

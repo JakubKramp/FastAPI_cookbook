@@ -3,7 +3,7 @@ from sqlmodel import create_engine, SQLModel
 
 from config import settings
 from auth.routes import user_router
-from recipies.routes import ingredient_router
+from recipes.routes import ingredient_router
 
 app = FastAPI()
 

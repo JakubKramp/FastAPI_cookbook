@@ -21,9 +21,7 @@ def test_create_profile(client: TestClient, session: Session, user: User):
         "activity_factor": "Little/no exercise",
         "smoking": True,
     }
-    response = client.post(
-        "/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"}
-    )
+    response = client.post("/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"})
     assert session.query(func.count(Profile.id)).scalar() == 1
     assert response.status_code == 201
 
@@ -58,16 +56,12 @@ def test_update_profile(client: TestClient, session: Session, user: User):
         "activity_factor": "Little/no exercise",
         "smoking": True,
     }
-    response = client.post(
-        "/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"}
-    )
+    response = client.post("/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"})
     profile = {
         "sex": "female",
         "age": 35,
     }
-    response = client.patch(
-        "/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"}
-    )
+    response = client.patch("/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert response.json()["sex"] == "female"
     assert response.json()["age"] == 35
@@ -89,9 +83,7 @@ def test_delete_user_and_profile(client: TestClient, session: Session, user: Use
         "activity_factor": "Little/no exercise",
         "smoking": True,
     }
-    client.post(
-        "/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"}
-    )
+    client.post("/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"})
     assert session.query(func.count(Profile.id)).scalar() == 1
     assert session.query(func.count(User.id)).scalar() == 1
     client.delete("/user", headers={"Authorization": f"Bearer {token}"})

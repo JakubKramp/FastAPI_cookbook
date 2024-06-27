@@ -9,7 +9,7 @@ from alembic import context
 # access to the values within the .ini file in use.
 config = context.config
 from auth.models import *
-from recipies.models import *
+from recipes.models import *
 from config import settings
 
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)

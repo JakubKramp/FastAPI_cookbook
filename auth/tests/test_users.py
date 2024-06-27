@@ -61,9 +61,7 @@ def test_update_user(client: TestClient, session: Session, user: User):
     )
     token = response.json()["access_token"]
     user_data = {"username": "newtestuser"}
-    response = client.patch(
-        "/user", json=user_data, headers={"Authorization": f"Bearer {token}"}
-    )
+    response = client.patch("/user", json=user_data, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert response.json()["username"] == "newtestuser"
 

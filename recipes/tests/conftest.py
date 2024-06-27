@@ -1,7 +1,6 @@
 import pytest
 
-import recipies.utils
-from recipies.tests.test_data import (
+from recipes.tests.test_data import (
     example_ingredient,
     example_ingredient_api_response,
     example_create_dish,
@@ -10,7 +9,7 @@ from recipies.tests.test_data import (
 
 @pytest.fixture(name="ingredient")
 def ingredient_fixture():
-    return example_ingredient
+    return example_ingredient.copy()
 
 
 def get_example_ingredient(*args, **kwargs):
@@ -18,12 +17,8 @@ def get_example_ingredient(*args, **kwargs):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def mock_nutrition_api(monkeypatch):
-    monkeypatch.setattr(
-        recipies.utils.NutritionalAPIClient,
-        "get_nutritional_values",
-        lambda x, y: get_example_ingredient(),
-    )
+def mock_nutrition_api(mocker):
+    mocker.patch("recipes.routes.get_nutritional_values", return_value=get_example_ingredient())
 
 
 @pytest.fixture(name="create_dish")

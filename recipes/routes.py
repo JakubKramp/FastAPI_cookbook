@@ -1,11 +1,10 @@
-from fastapi import APIRouter
-from fastapi import HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy import func
 from sqlmodel import Session
 from starlette.responses import JSONResponse
 
-from recipies.models import (
+from recipes.models import (
     CreateIngredient,
     Ingredient,
     ListIngredient,
@@ -18,18 +17,21 @@ from recipies.models import (
     NutritionalValues,
 )
 from app.utils.db import get_session
+from recipes.tasks import get_nutritional_values
 
 ingredient_router = APIRouter(prefix="/ingredients", tags=["ingredients"])
 
 
 @ingredient_router.post("/", response_model=Ingredient, status_code=201)
-def create_ingredient(
-    ingredient: CreateIngredient, session: Session = Depends(get_session)
+async def create_ingredient(
+    ingredient: CreateIngredient,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(get_session),
 ):
+    if session.query(Ingredient).filter_by(name=ingredient.name.lower()).first():
+        return HTTPException(409, "Item with this name already exists")
     ingredient = Ingredient.from_orm(ingredient)
-    session.add(ingredient)
-    session.commit()
-    session.refresh(ingredient)
+    background_tasks.add_task(get_nutritional_values, ingredient, session)
     return ingredient
 
 
@@ -79,9 +81,7 @@ def delete_ingredient(ingredient_id: int, session: Session = Depends(get_session
         raise HTTPException(status_code=404, detail="Ingredient not found")
     session.delete(ingredient)
     session.commit()
-    return JSONResponse(
-        content={"message": f"Ingredient {ingredient_id} deleted"}, status_code=204
-    )
+    return JSONResponse(content={"message": f"Ingredient {ingredient_id} deleted"}, status_code=204)
 
 
 @ingredient_router.post(
@@ -106,9 +106,7 @@ def create_dish(dish_data: CreateDish, session: Session = Depends(get_session)):
     session.refresh(dish)
     for ingredient in ingredients:
         i = session.scalars(
-            select(Ingredient).where(
-                Ingredient.name == ingredient["ingredient"]["name"].lower()
-            )
+            select(Ingredient).where(Ingredient.name == ingredient["ingredient"]["name"].lower())
         ).first()
         if not i:
             i = Ingredient(name=ingredient["ingredient"]["name"].lower())

@@ -42,7 +42,12 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 110
-extend-exclude = ['migrations/']
+exclude = '''
+/(
+    \.venv      # Exclude virtual environment directories
+    | migrations    # Exclude build directories
+)/
+'''
 
 [tool.ruff]
 line-length = 110
