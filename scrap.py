@@ -1,6 +1,6 @@
+"""
 import time
-
-from selenium import webdriver
+from selelium import webdriver
 from bs4 import BeautifulSoup
 import re
 
@@ -84,3 +84,4 @@ class Scrapper:
                 except IndexError:
                     pass
         profile.calories = int(calories.replace(",", ""))
+"""

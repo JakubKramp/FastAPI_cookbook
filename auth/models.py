@@ -4,7 +4,7 @@ from sqlalchemy import String, Column
 from sqlalchemy.event import listens_for
 from sqlmodel import Field, SQLModel, Relationship
 
-from scrap import Scrapper
+#from scrap import Scrapper
 
 
 class User(SQLModel, table=True):
@@ -113,7 +113,8 @@ class Profile(BaseProfile, DietaryReferenceIntakes, table=True):
 
 @listens_for(Profile, "before_insert")
 def set_dietary_reference_intakes(mapper, connection, target):
-    Scrapper.get_DRI(target)
+    pass
+    #Scrapper.get_DRI(target)
 
 
 class UserDetail(UserList):
