@@ -1,94 +1,45 @@
 from typing import Optional, List
 
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import UniqueConstraint, String, ForeignKey, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlmodel import Field, SQLModel, Relationship
+
+from app.utils.db import Base
 from recipes.tests.test_data import example_ingredient
 
 
-class NutritionalValues(SQLModel):
-    calories: Optional[float] = 0.0
-    fat_total: Optional[float] = 0.0
-    fat_saturated: Optional[float] = 0.0
-    protein: Optional[float] = 0.0
-    sodium: Optional[float] = 0.0
-    potassium: Optional[float] = 0.0
-    cholesterol: Optional[float] = 0.0
-    carbohydrates_total: Optional[float] = 0.0
-    fiber: Optional[float] = 0.0
-    sugar: Optional[float] = 0.0
 
-    class Config:
-        schema_extra = {
-            "example": {
-                "calories": 34,
-                "fat_total": 0.2,
-                "fat_saturated": 0,
-                "protein": 0.8,
-                "sodium": 57,
-                "potassium": 30,
-                "cholesterol": 0,
-                "carbohydrates_total": 8.3,
-                "fiber": 3,
-                "sugar": 3.4,
-            }
-        }
-
-
-class Ingredient(NutritionalValues, table=True):
+class Ingredient(Base):
     """
     Nutritional values by default refer to 100g serving.
     """
-
+    __tablename__ = "ingredient"
     __table_args__ = (UniqueConstraint("name"),)
-    id: int | None = Field(default=None, primary_key=True)
-    name: str
-    ingredient_items: List["IngredientItem"] = Relationship(back_populates="ingredient")
 
-    class Config:
-        example = example_ingredient.copy()
-        example.update({"id": 72})
-        schema_extra = {"example": example}
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String)
 
+    # NutritionalValues
+    calories: Mapped[float] = mapped_column(default=0.0)
+    fat_total: Mapped[float] = mapped_column(default=0.0)
+    fat_saturated: Mapped[float] = mapped_column(default=0.0)
+    protein: Mapped[float] = mapped_column(default=0.0)
+    sodium: Mapped[float] = mapped_column(default=0.0)
+    potassium: Mapped[float] = mapped_column(default=0.0)
+    cholesterol: Mapped[float] = mapped_column(default=0.0)
+    carbohydrates_total: Mapped[float] = mapped_column(default=0.0)
+    fiber: Mapped[float] = mapped_column(default=0.0)
+    sugar: Mapped[float] = mapped_column(default=0.0)
 
-class CreateIngredient(SQLModel):
-    name: str
+    # Relationships
+    ingredient_items: Mapped[List["IngredientItem"]] = relationship(
+        back_populates="ingredient"
+    )
 
-    class Config:
-        schema_extra = {
-            "example": {
-                "name": "carrot",
-            }
-        }
-
-
-class ListIngredient(CreateIngredient):
-    calories: Optional[float]
-    fat_total: Optional[float]
-    protein: Optional[float]
-    carbohydrates_total: Optional[float]
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "name": "carrot",
-                "calories": 34,
-                "fat_total": 0.2,
-                "protein": 0.8,
-                "carbohydrates_total": 8.3,
-            }
-        }
+    def __repr__(self):
+        return f"Ingredient {self.name} with an ID of {self.id}"
 
 
-class UpdateIngredient(ListIngredient):
-    fat_saturated: Optional[float]
-    sodium: Optional[float]
-    potassium: Optional[float]
-    cholesterol: Optional[float]
-    fiber: Optional[float]
-    sugar: Optional[float]
-
-    class Config:
-        schema_extra = {"example": example_ingredient}
 
 
 # Currently SQLAlchemy does not support async event handling,
@@ -103,124 +54,34 @@ class UpdateIngredient(ListIngredient):
 #         target.__setattr__(key, value)
 
 
-class Dish(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    ingredients: List["IngredientItem"] = Relationship(back_populates="dish")
-    name: str
-    recipe: Optional[str]
+class Dish(Base):
+    __tablename__ = "dish"
 
-    class Config:
-        schema_extra = {
-            "example": {
-                "id": 72,
-                "name": "Mashed potatoes",
-                "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
-                "ingredients": [
-                    {
-                        "amount": 700,
-                        "ingredient": {"name": "potato"},
-                    },
-                    {
-                        "amount": 300,
-                        "ingredient": {"name": "butter"},
-                    },
-                ],
-            }
-        }
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String)
+    recipe: Mapped[str | None] = mapped_column(Text)
+
+    ingredients: Mapped[List["IngredientItem"]] = relationship(
+        back_populates="dish"
+    )
 
 
-class CreateIngredientItem(SQLModel):
-    ingredient: CreateIngredient
-    amount: int
-
-
-class CreateDish(SQLModel):
-    name: str
-    recipe: Optional[str]
-    ingredients: List[CreateIngredientItem]
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "id": 72,
-                "name": "Mashed potatoes",
-                "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
-                "ingredients": [
-                    {
-                        "amount": 700,
-                        "ingredient": {"name": "potato"},
-                    },
-                    {
-                        "amount": 300,
-                        "ingredient": {"name": "butter"},
-                    },
-                ],
-            }
-        }
-
-
-class ListIngredientItem(SQLModel):
-    amount: int
-    ingredient: CreateIngredient
-
-
-class ListDish(SQLModel):
-    id: int
-    name: str
-    recipe: Optional[str]
-    ingredients: List[ListIngredientItem]
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "id": 72,
-                "name": "Mashed potatoes",
-                "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
-                "ingredients": [
-                    {
-                        "amount": 700,
-                        "ingredient": {"name": "potato"},
-                    },
-                    {
-                        "amount": 300,
-                        "ingredient": {"name": "butter"},
-                    },
-                ],
-            }
-        }
-
-
-class DishDetail(ListDish):
-    nutritional_values: NutritionalValues
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "name": "Mashed potatoes",
-                "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
-                "ingredients": [
-                    {
-                        "amount": 700,
-                        "ingredient": {"name": "potato"},
-                    },
-                    {
-                        "amount": 300,
-                        "ingredient": {"name": "butter"},
-                    },
-                ],
-            }
-        }
-
-
-class IngredientItem(SQLModel, table=True):
+class IngredientItem(Base):
     """
-    This model is a proxy between Ingredient and Recipe, allowing us to set amount of produce for each dish.
+    Proxy between Ingredient and Dish, allowing us to set amount of produce for each dish.
     Amount is in grams.
     """
+    __tablename__ = "ingredientitem"
 
-    id: int | None = Field(default=None, primary_key=True)
-    ingredient_id: Optional[int] = Field(default=None, foreign_key="ingredient.id")
-    ingredient: Optional["Ingredient"] = Relationship(back_populates="ingredient_items")
-    dish_id: Optional[int] = Field(default=None, foreign_key="dish.id")
-    dish: Optional[Dish] = Relationship(back_populates="ingredients")
-    amount: int
+    id: Mapped[int] = mapped_column(primary_key=True)
+    amount: Mapped[int] = mapped_column()
+
+    ingredient_id: Mapped[int | None] = mapped_column(ForeignKey("ingredient.id"))
+    ingredient: Mapped["Ingredient | None"] = relationship(
+        back_populates="ingredient_items"
+    )
+
+    dish_id: Mapped[int | None] = mapped_column(ForeignKey("dish.id"))
+    dish: Mapped["Dish | None"] = relationship(
+        back_populates="ingredients"
+    )

@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Session, select
 from starlette import status
 
@@ -13,15 +14,12 @@ from app.security import (
     get_password_hash,
     get_current_username,
 )
-from auth.schemas import Token
+from auth.schemas import Token, UserDetail, UserCreate, UserUpdate
 from config import settings
 from auth.models import (
     User,
-    UserDetail,
     Profile,
-    UserCreate,
-    UpdateProfile,
-    UserUpdate,
+
 )
 from app.utils.db import get_session
 
@@ -29,40 +27,40 @@ user_router = APIRouter(prefix="/user", tags=["auth"])
 
 
 @user_router.post("/", response_model=UserDetail, status_code=201)
-def sign_up(user: UserCreate, session: Session = Depends(get_session)):
+async def sign_up(user: UserCreate, session: AsyncSession = Depends(get_session)) -> UserDetail:
     db_user = User(
         username=user.username,
         email=user.email,
         password=get_password_hash(user.password),
     )
     try:
-        session.add(db_user)
-        session.commit()
+        await session.add(db_user)
+        await session.commit()
     except IntegrityError:
         raise HTTPException(status_code=409, detail="Username/email already taken")
     return db_user
 
 
 @user_router.get("/", response_model=UserDetail, status_code=200)
-def user_detail(user_id: int, session: Session = Depends(get_session)):
-    user = session.get(User, user_id)
+async def user_detail(user_id: int, session: AsyncSession = Depends(get_session)) -> UserDetail:
+    user = await session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
 
 @user_router.get("/me", response_model=UserDetail, status_code=200)
-def current_user(session: Session = Depends(get_session), user: str = Depends(get_current_username)):
-    authenticated_user = session.scalars(select(User).where(User.username == user)).first()
+async def current_user(session: AsyncSession = Depends(get_session), user: str = Depends(get_current_username)):
+    authenticated_user = await session.scalars(select(User).where(User.username == user)).first()
     return authenticated_user
 
 
-@user_router.patch("/", response_model=UserCreate)
+@user_router.patch("/", response_model=UserDetail)
 def update_user(
     user_data: UserUpdate,
     session: Session = Depends(get_session),
     user: str = Depends(get_current_username),
-):
+) -> UserDetail:
     user = session.scalars(select(User).where(User.username == user)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
