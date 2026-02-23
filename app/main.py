@@ -13,7 +13,7 @@ app.include_router(ingredient_router)
 engine = create_engine(settings.DATABASE_URL)
 
 
-def create_db_and_tables():
+def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
 
 

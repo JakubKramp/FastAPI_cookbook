@@ -66,7 +66,7 @@ def update_user(
     user = session.scalars(select(User).where(User.username == user)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    user_data = user_data.dict(exclude_unset=True)
+    user_data = user_data.model_dump(exclude_unset=True)
     for key, value in user_data.items():
         if key == "password":
             value = get_password_hash(value)
