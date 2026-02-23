@@ -13,14 +13,14 @@ from auth.schemas import DietaryReferenceIntakes, BaseProfile
 
 
 class User(Base):
-    __tablename__ = "user_account"
+    __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(String(50), unique=True)
     username: Mapped[str] = mapped_column(String(50), unique=True)
     password: Mapped[str] = mapped_column(String(250), unique=True)
 
-    addresses: Mapped["Profile"] = relationship(
+    profile: Mapped["Profile"] = relationship(
      back_populates="user", cascade="all, delete-orphan"
     )
     def __repr__(self) -> str:

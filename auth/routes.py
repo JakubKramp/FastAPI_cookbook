@@ -5,6 +5,7 @@ from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlmodel import Session, select
 from starlette import status
 
@@ -14,7 +15,7 @@ from app.security import (
     get_password_hash,
     get_current_username,
 )
-from auth.schemas import Token, UserDetail, UserCreate, UserUpdate
+from auth.schemas import Token, UserDetail, UserCreate, UserUpdate, ProfileDetail, UpdateProfile, UserList
 from config import settings
 from auth.models import (
     User,
@@ -26,7 +27,7 @@ from app.utils.db import get_session
 user_router = APIRouter(prefix="/user", tags=["auth"])
 
 
-@user_router.post("/", response_model=UserDetail, status_code=201)
+@user_router.post("/", response_model=UserList, status_code=201)
 async def sign_up(user: UserCreate, session: AsyncSession = Depends(get_session)) -> UserDetail:
     db_user = User(
         username=user.username,
@@ -34,8 +35,9 @@ async def sign_up(user: UserCreate, session: AsyncSession = Depends(get_session)
         password=get_password_hash(user.password),
     )
     try:
-        await session.add(db_user)
+        session.add(db_user)
         await session.commit()
+        await session.refresh(db_user)
     except IntegrityError:
         raise HTTPException(status_code=409, detail="Username/email already taken")
     return db_user
@@ -43,7 +45,11 @@ async def sign_up(user: UserCreate, session: AsyncSession = Depends(get_session)
 
 @user_router.get("/", response_model=UserDetail, status_code=200)
 async def user_detail(user_id: int, session: AsyncSession = Depends(get_session)) -> UserDetail:
-    user = await session.get(User, user_id)
+    user = await session.execute(
+        select(User)
+        .options(selectinload(User.profile))
+        .where(User.id == user_id)
+    )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
@@ -101,8 +107,8 @@ async def login_for_access_token(
     access_token = create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer"}
 
-
-@user_router.post("/profile", response_model=Profile, status_code=201)
+"""
+@user_router.post("/profile", response_model=ProfileDetail, status_code=201)
 async def create_user_profile(
     profile: Profile,
     session: Session = Depends(get_session),
@@ -135,3 +141,4 @@ async def update_user_profile(
     session.commit()
     session.refresh(profile)
     return profile
+"""
