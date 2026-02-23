@@ -31,4 +31,4 @@ jobs:
       - name: Build the image
         run: docker compose build
       - name: Run tests
-      - run: docker-compose -f docker-compose-ci.yml run api pytest .
+        run: docker-compose -f docker-compose-ci.yml run api pytest .
