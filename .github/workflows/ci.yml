@@ -17,7 +17,6 @@ jobs:
     needs: [install-dev]
     steps:
       - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup
       - run: uvx ruff check .
   type-check:
     runs-on: ubuntu-latest
@@ -32,7 +31,6 @@ jobs:
     needs: [ruff-lint, type-check]
     steps:
       - uses: actions/checkout@v6
-      - uses: ./.github/actions/setup
       - name: Build the image
         run: docker compose build
       - name: Run tests
