@@ -114,7 +114,7 @@ class DRIClient(BaseDRIClient):
         for key, value in table_data.items():
             if key in self.DRI_names_mapping:
                 dri_data[self.DRI_names_mapping[key]] = await self.process_value(value)
-        dri_data['calories'] = calories
+        dri_data['calories'] = calories.replace('.', '')
         return DietaryReferenceIntakes(**dri_data)
 
     async def fill_profile(self, profile: Profile, session: AsyncSession) -> Profile:

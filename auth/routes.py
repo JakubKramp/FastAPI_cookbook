@@ -15,7 +15,7 @@ from app.security import (
     get_password_hash,
     get_current_user,
 )
-from auth.schemas import Token, UserDetail, UserCreate, UserUpdate, ProfileDetail, UserList, BaseProfile
+from auth.schemas import Token, UserDetail, UserCreate, UserUpdate, ProfileDetail, UserList, BaseProfile, UpdateProfile
 from config import settings
 from auth.models import (
     User,
@@ -121,23 +121,20 @@ async def create_user_profile(
     await session.refresh(db_profile)
     return db_profile
 
-"""
-@user_router.patch("/profile", response_model=Profile, status_code=200)
+
+@user_router.patch("/profile", response_model=ProfileDetail, status_code=200)
 async def update_user_profile(
     profile_data: UpdateProfile,
-    session: Session = Depends(get_session),
+    session: AsyncSession = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
-    profile = session.scalars(
-        select(Profile, User).join(Profile.user).where(User == user)
-    ).first()
+    result = await session.scalars(select(Profile).where(Profile.user_id == user.id))
+    profile = result.first()
     if not profile:
         raise HTTPException(status_code=404, detail="User not found")
-    profile_data = profile_data.dict(exclude_unset=True)
-    for key, value in profile_data.items():
+    for key, value in profile_data.model_dump(exclude_unset=True).items():
         setattr(profile, key, value)
     session.add(profile)
-    session.commit()
-    session.refresh(profile)
+    await session.commit()
+    await session.refresh(profile)
     return profile
-"""

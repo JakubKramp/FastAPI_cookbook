@@ -48,12 +48,12 @@ class UserCreate(UserList):
 
 
 class UpdateProfile(BaseModel):
-    sex: SexEnum | None
-    activity_factor: str | None
-    age: int | None
-    height: int | None
-    weight: int | None
-    smoking: bool | None
+    sex: SexEnum | None = None
+    activity_factor: str | None = None
+    age: int | None = None
+    height: int | None = None
+    weight: int | None = None
+    smoking: bool | None = None
 
 
 class BaseProfile(BaseModel):
@@ -88,7 +88,14 @@ class DietaryReferenceIntakes(BaseModel):
     sodium: float | None
 
 class ProfileDetail(BaseProfile):
-    DRI: DietaryReferenceIntakes | None = None
+    calories: float | None = None
+    carbohydrates: float | None = None
+    fat: float | None = None
+    protein: float | None = None
+    fiber: float | None = None
+    potassium: float | None = None
+    sodium: float | None = None
+
 
     class Config:
         json_schema_extra = {
@@ -99,15 +106,13 @@ class ProfileDetail(BaseProfile):
                 "weight": 80,
                 "activity_factor": "Little/no exercise",
                 "smoking": True,
-                'DRI':{
-                    'calories': 4000,
-                    'carbohydrates': 4000,
-                    'fat': 4000,
-                    'protein': 4000,
-                    'fiber': 4000,
-                    'potassium': 4000,
-                    'sodium': 4000,
-                }
+                'calories': 4000,
+                'carbohydrates': 4000,
+                'fat': 4000,
+                'protein': 4000,
+                'fiber': 4000,
+                'potassium': 4000,
+                'sodium': 4000,
             }
         }
 
