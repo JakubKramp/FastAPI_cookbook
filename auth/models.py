@@ -1,9 +1,10 @@
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, Enum
 from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
 from app.utils.db import Base
+from auth.constants import SexEnum, ActivityFactor
 
 
 class User(Base):
@@ -29,21 +30,21 @@ class Profile(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     # BaseProfile
-    sex: Mapped[str] = mapped_column(String)
-    activity_factor: Mapped[str | None] = mapped_column(String)
+    sex: Mapped[SexEnum] = mapped_column(Enum(SexEnum))
+    activity_factor: Mapped[ActivityFactor] = mapped_column(Enum(ActivityFactor))
     age: Mapped[int] = mapped_column()
     height: Mapped[int] = mapped_column()
     weight: Mapped[int] = mapped_column()
     smoking: Mapped[bool] = mapped_column()
 
     # DietaryReferenceIntakes
-    calories: Mapped[int | None] = mapped_column()
-    carbohydrates: Mapped[int | None] = mapped_column()
-    fat: Mapped[int | None] = mapped_column()
-    protein: Mapped[int | None] = mapped_column()
-    fiber: Mapped[int | None] = mapped_column()
-    potassium: Mapped[int | None] = mapped_column()
-    sodium: Mapped[int | None] = mapped_column()
+    calories: Mapped[float | None] = mapped_column()
+    carbohydrates: Mapped[float | None] = mapped_column()
+    fat: Mapped[float | None] = mapped_column()
+    protein: Mapped[float | None] = mapped_column()
+    fiber: Mapped[float| None] = mapped_column()
+    potassium: Mapped[float | None] = mapped_column()
+    sodium: Mapped[float | None] = mapped_column()
 
     # Relationship
     user_id: Mapped[int | None] = mapped_column(ForeignKey("user.id"), default=None)

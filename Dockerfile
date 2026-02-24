@@ -14,6 +14,11 @@ ENV UV_NO_DEV=1
 WORKDIR /app
 RUN uv sync --locked
 
+ARG INSTALL_PLAYWRIGHT=false
+
+RUN pip install playwright
+RUN if [ "$INSTALL_PLAYWRIGHT" = "true" ]; then playwright install chromium && playwright install-deps chromium; fi
+
 # Make venv available
 ENV PATH="/app/.venv/bin:$PATH"
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

@@ -15,7 +15,7 @@ from app.security import (
     get_password_hash,
     get_current_user,
 )
-from auth.schemas import Token, UserDetail, UserCreate, UserUpdate, ProfileDetail, UserList
+from auth.schemas import Token, UserDetail, UserCreate, UserUpdate, ProfileDetail, UserList, BaseProfile
 from config import settings
 from auth.models import (
     User,
@@ -104,17 +104,19 @@ async def login_for_access_token(
 
 @user_router.post("/profile", response_model=ProfileDetail, status_code=201)
 async def create_user_profile(
-    profile: Profile,
-    session: AsyncSession = Depends(get_session),
-    user: User = Depends(get_current_user),
+        profile: BaseProfile,
+        session: AsyncSession = Depends(get_session),
+        user: User = Depends(get_current_user),
 ):
-    result = await session.scalars(select(Profile).where(Profile.user == user))
+    result = await session.scalars(select(Profile).where(Profile.user_id == user.id))
     if db_profile := result.first():
         return db_profile
-    profile.user_id = user.id
-    session.add(profile)
+
+    db_profile = Profile(**profile.model_dump(), user_id=user.id)
+    session.add(db_profile)
     await session.commit()
-    return profile
+    await session.refresh(db_profile)
+    return db_profile
 
 """
 @user_router.patch("/profile", response_model=Profile, status_code=200)
