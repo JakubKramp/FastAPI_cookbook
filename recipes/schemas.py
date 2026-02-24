@@ -89,17 +89,6 @@ class ListIngredient(CreateIngredient):
         }
 
 
-class UpdateIngredient(ListIngredient):
-    fat_saturated: Optional[float]
-    sodium: Optional[float]
-    potassium: Optional[float]
-    cholesterol: Optional[float]
-    fiber: Optional[float]
-    sugar: Optional[float]
-
-    class Config:
-        schema_extra = {"example": example_ingredient}
-
 class CreateDish(BaseModel):
     name: str
     recipe: Optional[str]

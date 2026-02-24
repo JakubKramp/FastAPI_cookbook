@@ -17,12 +17,21 @@ dependencies = [
     "pytest>=9.0.2",
     "python-jose[cryptography]>=3.5.0",
     "python-multipart>=0.0.22",
-    "ruff>=0.15.2",
     "sqlalchemy>=2.0.46",
     "sqlalchemy-utils>=0.42.1",
     "sqlmodel>=0.0.37",
     "uvicorn>=0.41.0",
 ]
+
+
+[dependency-groups]
+ci = [
+    "ruff>=0.15.2",
+    "ty>=0.0.18",
+]
+
+[tool.ty.src]
+exclude = ["migrations/", '.venv/', 'recipes/']
 
 
 [tool.ruff]

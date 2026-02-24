@@ -1,12 +1,9 @@
-from typing import Optional, List
+from typing import List
 
 from sqlalchemy import UniqueConstraint, String, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlmodel import Field, SQLModel, Relationship
 
 from app.utils.db import Base
-from recipes.tests.test_data import example_ingredient
-
 
 
 class Ingredient(Base):

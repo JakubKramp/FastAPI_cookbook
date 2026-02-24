@@ -1,7 +1,6 @@
 import pytest
 from sqlalchemy.orm import Session
 
-import scrap
 from app.security import get_password_hash
 from auth.models import User
 

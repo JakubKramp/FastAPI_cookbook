@@ -2,7 +2,8 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 from sqlalchemy import func
 
-from recipes.models import Ingredient, CreateIngredient, Dish, IngredientItem
+from recipes.models import Ingredient, Dish, IngredientItem
+from recipes.schemas import CreateIngredient
 
 
 def test_get_ingredient(session: Session, client: TestClient, ingredient: Ingredient):

@@ -1,15 +1,9 @@
-from typing import Optional
-
-from sqlalchemy import String, Column, ForeignKey
+from sqlalchemy import String, ForeignKey
 from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlmodel import Field, SQLModel, Relationship
+
 
 from app.utils.db import Base
-from auth.schemas import DietaryReferenceIntakes, BaseProfile
-
-
-#from scrap import Scrapper
 
 
 class User(Base):
@@ -20,8 +14,8 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(50), unique=True)
     password: Mapped[str] = mapped_column(String(250), unique=True)
 
-    profile: Mapped["Profile"] = relationship(
-     back_populates="user", cascade="all, delete-orphan"
+    profile: Mapped["Profile | None"] = relationship(
+     back_populates="user", cascade="all, delete-orphan", uselist=False,
     )
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, name={self.email!r})"

@@ -26,6 +26,6 @@ class NutritionalAPIClient:
         data = await self.search_for_ingredients(ingredient_name)
         nutri_data = {
             NUTRITIONAL_VALUES_MAPPING[nutrient['nutrientName']]: nutrient['value']
-            for nutrient in data['foods'][0]['foodNutrients']
+            for nutrient in data['foods'][0]['foodNutrients'] # type: ignore
         }
         return NutritionalValues(**nutri_data)
