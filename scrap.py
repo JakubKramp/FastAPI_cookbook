@@ -1,9 +1,7 @@
+import asyncio
 import inspect
-import profile
-import time
 
 from playwright.async_api import async_playwright
-import re
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,21 +21,6 @@ class BaseDRIClient:
         return age_label.label
 
     @staticmethod
-    def set_value(profile, key, value):
-        if type(value) is int:
-            profile.__setattr__(profile, key, value)
-            return
-        elif " mg" in value:
-            profile.__setattr__(key, int(value.split("mg")[0]))
-            return
-        elif "grams" in value:
-            value = value.strip(" grams")
-        if value.find("-"):
-            profile.__setattr__(key, int(sum(map(int, value.split("-"))) / 2))
-            return
-        profile.__setattr__(key, value)
-
-    @staticmethod
     async def accept_cookie_banner(page):
         try:
             button = page.locator("#accept-btn")
@@ -51,12 +34,14 @@ class BaseDRIClient:
 
 
 async def get_table_data(page):
-    rows = await page.locator('table tr').all()
+    tables = await page.locator('table').all()
     data = {}
-    for row in rows[1:]:  # skip header
-        cells = await row.locator('td p').all_inner_texts()
-        if len(cells) == 2:
-            data[cells[0]] = cells[1]
+    for table in tables:
+        rows = await table.locator('tr').all()
+        for row in rows[1:]:  # skip header
+            cells = await row.locator('td p').all_inner_texts()
+            if len(cells) == 2:
+                data[cells[0]] = cells[1]
     return data
 
 
@@ -87,8 +72,7 @@ class DRIClient(BaseDRIClient):
         await weight_input.fill(str(profile.weight))
 
     async def set_activity(self, page,  profile) -> None:
-        activity_select = page.locator('#blockGroups\\.0\\.matrices\\.6\\.columns\\.0\\.0-input')
-        await activity_select.select_option(label='Exercise 1-2 times a week')
+        activity_select = page.locator('[id="blockGroups.0.matrices.6.columns.0.0-input"]')
         await activity_select.select_option(label=profile.activity_factor)
 
     async def set_smoking(self, page, profile) -> None:
@@ -100,11 +84,8 @@ class DRIClient(BaseDRIClient):
         await age_select.select_option(label=self.get_age(profile.age))
 
     async def set_sex(self, page, profile):
-        sex_radiogroup = page.locator(
-            '[role="radiogroup"][data-cwv-id="calculator-block_variable-value_select-radio"]')
-
-        sex_radio = sex_radiogroup.locator('label').filter(has_text=profile.sex).locator('input[type="radio"]')
-        await sex_radio.check()
+        sex_radiogroup = page.locator('[role="radiogroup"][data-cwv-id="calculator-block_variable-value_select-radio"]')
+        await sex_radiogroup.get_by_role("radio", name=profile.sex, exact=True).check()
 
     async def fill_form(self, page, profile):
         for setter in self.setter_functions:
@@ -125,7 +106,7 @@ class DRIClient(BaseDRIClient):
 
 
     async def extract_data(self, page) -> DietaryReferenceIntakes:
-        table_data = get_table_data(page)
+        table_data = await get_table_data(page)
         dri_data = {}
         calories = await page.locator('[data-testid="blockGroups.0.matrices.7.columns.0.0-input"]').input_value()
         for key, value in table_data.items():
@@ -134,24 +115,21 @@ class DRIClient(BaseDRIClient):
         dri_data['calories'] = calories
         return DietaryReferenceIntakes(**dri_data)
 
-    async def get_data(self, profile, session) -> DietaryReferenceIntakes:
+    async def fill_profile(self, profile: Profile, session: AsyncSession) -> Profile:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=False, slow_mo=500)
+            browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
             await page.goto(self.base_url)
             await self.accept_cookie_banner(page)
             await self.fill_form(page, profile)
-            dri = await self.extract_data(page)
-            profile = await self.fill_profile(profile, session, dri)
-            return dri
+            await asyncio.sleep(1)
+            dri_data = await self.extract_data(page)
 
-    async def fill_profile(self, profile: Profile, session: AsyncSession, dri_data: DietaryReferenceIntakes) -> Profile:
+            for field in ["calories", "carbohydrates", "fat", "protein", "fiber", "potassium", "sodium"]:
+                setattr(profile, field, getattr(dri_data, field))
 
-        for field in ["calories", "carbohydrates", "fat", "protein", "fiber", "potassium", "sodium"]:
-            setattr(profile, field, getattr(dri_data, field))
-
-        session.add(profile)
-        await session.commit()
-        await session.refresh(profile)
+            session.add(profile)
+            await session.commit()
+            await session.refresh(profile)
 
         return profile

@@ -1,24 +1,21 @@
 FROM python:3.13-slim
 
-
-# Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Copy the project into the image
-COPY . /app
-
-# Disable development dependencies
-ENV UV_NO_DEV=1
-
-# Sync the project into a new environment, asserting the lockfile is up to date
 WORKDIR /app
-RUN uv sync --locked
+
+# Copy only dependency files first - this layer is cached until they change
+COPY pyproject.toml uv.lock ./
+RUN uv sync --locked --no-install-project
+
+# Then copy the rest of the code
+COPY . .
+
+ENV UV_NO_DEV=1
+ENV PATH="/app/.venv/bin:$PATH"
 
 ARG INSTALL_PLAYWRIGHT=false
-
 RUN pip install playwright
 RUN if [ "$INSTALL_PLAYWRIGHT" = "true" ]; then playwright install chromium && playwright install-deps chromium; fi
 
-# Make venv available
-ENV PATH="/app/.venv/bin:$PATH"
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

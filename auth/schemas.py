@@ -67,7 +67,6 @@ class BaseProfile(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "user_id": 1,
                 "sex": "Male",
                 "age": 30,
                 "height": 180,

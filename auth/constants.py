@@ -1,7 +1,7 @@
 import enum
 from dataclasses import dataclass
 
-class SexEnum(enum.Enum):
+class SexEnum(str, enum.Enum):
     MALE = "Male"
     FEMALE = "Female"
 
@@ -21,7 +21,7 @@ class Range:
 
     @property
     def label(self) -> str:
-        return f"{self.low}–{self.high} years"
+        return f"{self.low}-{self.high} years"
 
     def __contains__(self, value: int) -> bool:
         return self.low <= value <= self.high

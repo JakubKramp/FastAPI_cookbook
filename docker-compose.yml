@@ -1,5 +1,6 @@
 volumes:
   pgdata:
+  venv:
 
 services:
   api:
@@ -8,7 +9,9 @@ services:
     depends_on:
       - postgres
     volumes:
-      - .:/code
+      - .:/app
+      - venv:/app/.venv  # preserve the venv from the image
+
     ports:
       - '8000:8000'
 

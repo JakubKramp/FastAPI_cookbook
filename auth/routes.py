@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Response, BackgroundTasks
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError
@@ -15,6 +15,7 @@ from app.security import (
     get_password_hash,
     get_current_user,
 )
+from auth.constants import SexEnum
 from auth.schemas import Token, UserDetail, UserCreate, UserUpdate, ProfileDetail, UserList, BaseProfile
 from config import settings
 from auth.models import (
@@ -23,6 +24,7 @@ from auth.models import (
 
 )
 from app.utils.db import get_session
+from scrap import DRIClient
 
 user_router = APIRouter(prefix="/user", tags=["auth"])
 
@@ -105,15 +107,17 @@ async def login_for_access_token(
 @user_router.post("/profile", response_model=ProfileDetail, status_code=201)
 async def create_user_profile(
         profile: BaseProfile,
+        background_tasks: BackgroundTasks,
         session: AsyncSession = Depends(get_session),
         user: User = Depends(get_current_user),
 ):
     result = await session.scalars(select(Profile).where(Profile.user_id == user.id))
     if db_profile := result.first():
         return db_profile
-
     db_profile = Profile(**profile.model_dump(), user_id=user.id)
     session.add(db_profile)
+    dri_client = DRIClient()
+    background_tasks.add_task(dri_client.fill_profile,db_profile, session)
     await session.commit()
     await session.refresh(db_profile)
     return db_profile
