@@ -18,10 +18,12 @@ class BaseDRIClient:
     @staticmethod
     def get_age(age: int) -> str| None:
         age_label = next((r for r in RANGES if age in r), None)
-        return age_label.label
+        if age_label:
+            return age_label.label
+        return None
 
     @staticmethod
-    async def accept_cookie_banner(page):
+    async def accept_cookie_banner(page) -> None:
         try:
             button = page.locator("#accept-btn")
             await button.wait_for(timeout=3000)
@@ -29,11 +31,11 @@ class BaseDRIClient:
         except Exception:
             pass  # banner didn't appear, continue
 
-    def get_DRI_data(self):
+    def get_dri_data(self):
         raise NotImplementedError
 
 
-async def get_table_data(page):
+async def get_table_data(page) -> dict[str, str]:
     tables = await page.locator('table').all()
     data = {}
     for table in tables:
@@ -87,7 +89,7 @@ class DRIClient(BaseDRIClient):
         sex_radiogroup = page.locator('[role="radiogroup"][data-cwv-id="calculator-block_variable-value_select-radio"]')
         await sex_radiogroup.get_by_role("radio", name=profile.sex, exact=True).check()
 
-    async def fill_form(self, page, profile):
+    async def fill_form(self, page, profile) -> None:
         for setter in self.setter_functions:
             await setter(page, profile)
 

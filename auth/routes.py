@@ -15,7 +15,6 @@ from app.security import (
     get_password_hash,
     get_current_user,
 )
-from auth.constants import SexEnum
 from auth.schemas import Token, UserDetail, UserCreate, UserUpdate, ProfileDetail, UserList, BaseProfile
 from config import settings
 from auth.models import (
