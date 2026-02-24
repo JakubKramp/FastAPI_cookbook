@@ -1,87 +1,137 @@
-"""
-import time
-from selelium import webdriver
-from bs4 import BeautifulSoup
-import re
+import asyncio
+import inspect
 
-url = "https://www.omnicalculator.com/health/dri"
+from playwright.async_api import async_playwright
+
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from auth.constants import RANGES
+from auth.models import Profile
+from auth.schemas import DietaryReferenceIntakes
 
 
-class Scrapper:
+class BaseDRIClient:
+    base_url = ""
+    DRI_names_mapping = {}
+    setter_functions = []
+
     @staticmethod
-    def set_value(profile, key, value):
-        if type(value) is int:
-            profile.__setattr__(profile, key, value)
-            return
-        elif value.find(" mg") >= 0:
-            profile.__setattr__(key, int(value.split("mg")[0]))
-            return
-        elif value.find(" grams") >= 0:
-            value = value.strip(" grams")
-        if value.find("-"):
-            profile.__setattr__(key, int(sum(map(int, value.split("-"))) / 2))
-            return
-        profile.__setattr__(key, value)
+    def get_age(age: int) -> str| None:
+        age_label = next((r for r in RANGES if age in r), None)
+        if age_label:
+            return age_label.label
+        return None
 
-    d = {
+    @staticmethod
+    async def accept_cookie_banner(page) -> None:
+        try:
+            button = page.locator("#accept-btn")
+            await button.wait_for(timeout=3000)
+            await button.click()
+        except Exception:
+            pass  # banner didn't appear, continue
+
+    def get_dri_data(self):
+        raise NotImplementedError
+
+
+async def get_table_data(page) -> dict[str, str]:
+    tables = await page.locator('table').all()
+    data = {}
+    for table in tables:
+        rows = await table.locator('tr').all()
+        for row in rows[1:]:  # skip header
+            cells = await row.locator('td p').all_inner_texts()
+            if len(cells) == 2:
+                data[cells[0]] = cells[1]
+    return data
+
+
+class DRIClient(BaseDRIClient):
+    base_url = "https://www.omnicalculator.com/health/dri"
+    DRI_names_mapping = {
         "Carbohydrates": "carbohydrates",
-        "calories": "calories",
         "Fat": "fat",
         "Protein": "protein",
         "Sodium": "sodium",
         "Potassium": "potassium",
         "Total fiber": "fiber",
     }
+    def __init__(self):
+        self.setter_functions = [
+            method for name, method in inspect.getmembers(self, predicate=inspect.ismethod)
+            if name.startswith("set_")
+        ]
+
+    async def set_height(self, page, profile) -> None:
+        height_input = page.locator('[data-cwv-id="calculator-block_variable-numerical-input_native"]').nth(0)
+        await height_input.click()
+        await height_input.fill(str(profile.height))
+
+    async def set_weight(self, page, profile) -> None:
+        weight_input = page.locator('[data-testid="blockGroups.0.matrices.4.columns.0.0-input"]')
+        await weight_input.click()
+        await weight_input.fill(str(profile.weight))
+
+    async def set_activity(self, page,  profile) -> None:
+        activity_select = page.locator('[id="blockGroups.0.matrices.6.columns.0.0-input"]')
+        await activity_select.select_option(label=profile.activity_factor)
+
+    async def set_smoking(self, page, profile) -> None:
+        if profile.smoking:
+            await page.locator('input[value="EF0hpa8mMsL4Ba0MSPGWM"]').click()
+
+    async def set_age(self, page, profile) -> None:
+        age_select = page.locator('[id="blockGroups.0.matrices.2.columns.0.0-input"]')
+        await age_select.select_option(label=self.get_age(profile.age))
+
+    async def set_sex(self, page, profile):
+        sex_radiogroup = page.locator('[role="radiogroup"][data-cwv-id="calculator-block_variable-value_select-radio"]')
+        await sex_radiogroup.get_by_role("radio", name=profile.sex, exact=True).check()
+
+    async def fill_form(self, page, profile) -> None:
+        for setter in self.setter_functions:
+            await setter(page, profile)
 
     @staticmethod
-    def get_age(age):
-        return "19-50 years"
+    async def process_value(value: str) -> float:
+        value, unit = value.strip().split(" ")
+        if unit == 'grams':
+            if '-' in value:
+                minimum, maximum = map(int, value.split('-'))
+                return (minimum + maximum)/2
+            return float(value)
+        elif unit == 'mg':
+            return float(value)/1000
+        else:
+            raise ValueError(f"Unrecognized unit: {unit}")
 
-    @staticmethod
-    def get_DRI(profile):
-        op = webdriver.ChromeOptions()
-        op.add_argument("headless")
-        driver = webdriver.Chrome(executable_path="opt/selenium/chromedriver", options=op)
-        driver.get(url)
-        time.sleep(2)
-        sex_choice = driver.find_element(value="react-select-2--value-item")
-        driver.execute_script(f'arguments[0].innerHTML = "{profile.sex}";', sex_choice)
-        age_choice = driver.find_element(value="react-select-3--value-item")
-        driver.execute_script(f'arguments[0].innerHTML = "{Scrapper.get_age(profile.age)}";', age_choice)
-        time.sleep(2)
-        try:
-            button = driver.find_elements(by="css selector", value="[class=fc-button-label]")
-            button[0].click()
-        except Exception:
-            pass
-        elems = driver.find_elements(by="css selector", value="[aria-label=Weight]")
-        elems[0].send_keys(profile.weight)
-        elems = driver.find_elements(by="css selector", value="[aria-label=Height]")
-        elems[0].send_keys(profile.height)
-        activity_choice = driver.find_element(value="react-select-6--value-item")
-        driver.execute_script(f'arguments[0].innerHTML = "{profile.activity_factor}";', activity_choice)
-        smoking_choice = driver.find_element(value="react-select-7--value-item")
-        driver.execute_script('arguments[0].innerHTML = "true";', smoking_choice)
-        time.sleep(2)
-        calories = driver.find_elements(
-            by="css selector", value='[aria-label="Total daily calorie requirement "]'
-        )[0].get_attribute("value")
-        elems = driver.find_elements(by="css selector", value="table")
-        elems = elems[4:]
 
-        for elem in elems:
-            table = BeautifulSoup(elem.get_attribute("innerHTML"), "lxml")
-            for tr in table.find_all("tr"):
-                td = tr.find_all("td")
-                try:
-                    td[0] = re.sub("<[^<]+?>", "", str(td[0]))
-                    if td[0] in Scrapper.d:
-                        Scrapper.set_value(
-                            profile,
-                            Scrapper.d[td[0]],
-                            re.sub("<[^<]+?>", "", str(td[1])),
-                        )
-                except IndexError:
-                    pass
-        profile.calories = int(calories.replace(",", ""))
-"""
+    async def extract_data(self, page) -> DietaryReferenceIntakes:
+        table_data = await get_table_data(page)
+        dri_data = {}
+        calories = await page.locator('[data-testid="blockGroups.0.matrices.7.columns.0.0-input"]').input_value()
+        for key, value in table_data.items():
+            if key in self.DRI_names_mapping:
+                dri_data[self.DRI_names_mapping[key]] = await self.process_value(value)
+        dri_data['calories'] = calories.replace('.', '')
+        return DietaryReferenceIntakes(**dri_data)
+
+    async def fill_profile(self, profile: Profile, session: AsyncSession) -> Profile:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            page = await browser.new_page()
+            await page.goto(self.base_url)
+            await self.accept_cookie_banner(page)
+            await self.fill_form(page, profile)
+            await asyncio.sleep(1)
+            dri_data = await self.extract_data(page)
+
+            for field in ["calories", "carbohydrates", "fat", "protein", "fiber", "potassium", "sodium"]:
+                setattr(profile, field, getattr(dri_data, field))
+
+            session.add(profile)
+            await session.commit()
+            await session.refresh(profile)
+
+        return profile

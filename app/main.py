@@ -19,7 +19,6 @@ async def create_db_and_tables() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("start")
     await create_db_and_tables()
     yield
 

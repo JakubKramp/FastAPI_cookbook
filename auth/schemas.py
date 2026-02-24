@@ -1,12 +1,14 @@
 from pydantic import BaseModel
 
+from auth.constants import SexEnum
+
 
 class UserList(BaseModel):
     email: str
     username: str
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "email": "jeff.spicoli@labeouf.com",
                 "username": "jeffS",
@@ -22,7 +24,7 @@ class UserUpdate(BaseModel):
     password: str | None
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "email": "jeff.spicoli@labeouf.com",
                 "password": "hewillnotdivideus",
@@ -35,7 +37,7 @@ class UserCreate(UserList):
     password: str | None
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "email": "jeff.spicoli@labeouf.com",
                 "password": "hewillnotdivideus",
@@ -46,16 +48,16 @@ class UserCreate(UserList):
 
 
 class UpdateProfile(BaseModel):
-    sex: str | None
-    activity_factor: str | None
-    age: int | None
-    height: int | None
-    weight: int | None
-    smoking: bool | None
+    sex: SexEnum | None = None
+    activity_factor: str | None = None
+    age: int | None = None
+    height: int | None = None
+    weight: int | None = None
+    smoking: bool | None = None
 
 
 class BaseProfile(BaseModel):
-    sex: str
+    sex: SexEnum
     activity_factor: str | None
     age: int
     height: int
@@ -63,9 +65,9 @@ class BaseProfile(BaseModel):
     smoking: bool
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
-                "sex": "male",
+                "sex": "Male",
                 "age": 30,
                 "height": 180,
                 "weight": 80,
@@ -77,35 +79,40 @@ class BaseProfile(BaseModel):
 
 
 class DietaryReferenceIntakes(BaseModel):
-    calories: int | None
-    carbohydrates: int | None
-    fat: int | None
-    protein: int | None
-    fiber: int | None
-    potassium: int | None
-    sodium: int | None
+    calories: float | None
+    carbohydrates: float | None
+    fat: float | None
+    protein: float | None
+    fiber: float | None
+    potassium: float | None
+    sodium: float | None
 
 class ProfileDetail(BaseProfile):
-    DRI: DietaryReferenceIntakes
+    calories: float | None = None
+    carbohydrates: float | None = None
+    fat: float | None = None
+    protein: float | None = None
+    fiber: float | None = None
+    potassium: float | None = None
+    sodium: float | None = None
+
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
-                "sex": "male",
+                "sex": "Male",
                 "age": 30,
                 "height": 180,
                 "weight": 80,
                 "activity_factor": "Little/no exercise",
                 "smoking": True,
-                'DRI':{
-                    'calories': 4000,
-                    'carbohydrates': 4000,
-                    'fat': 4000,
-                    'protein': 4000,
-                    'fiber': 4000,
-                    'potassium': 4000,
-                    'sodium': 4000,
-                }
+                'calories': 4000,
+                'carbohydrates': 4000,
+                'fat': 4000,
+                'protein': 4000,
+                'fiber': 4000,
+                'potassium': 4000,
+                'sodium': 4000,
             }
         }
 

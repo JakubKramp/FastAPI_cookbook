@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Response, BackgroundTasks
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError
@@ -15,7 +15,7 @@ from app.security import (
     get_password_hash,
     get_current_user,
 )
-from auth.schemas import Token, UserDetail, UserCreate, UserUpdate, ProfileDetail, UserList
+from auth.schemas import Token, UserDetail, UserCreate, UserUpdate, ProfileDetail, UserList, BaseProfile, UpdateProfile
 from config import settings
 from auth.models import (
     User,
@@ -23,6 +23,7 @@ from auth.models import (
 
 )
 from app.utils.db import get_session
+from scrap import DRIClient
 
 user_router = APIRouter(prefix="/user", tags=["auth"])
 
@@ -104,35 +105,36 @@ async def login_for_access_token(
 
 @user_router.post("/profile", response_model=ProfileDetail, status_code=201)
 async def create_user_profile(
-    profile: Profile,
+        profile: BaseProfile,
+        background_tasks: BackgroundTasks,
+        session: AsyncSession = Depends(get_session),
+        user: User = Depends(get_current_user),
+):
+    result = await session.scalars(select(Profile).where(Profile.user_id == user.id))
+    if db_profile := result.first():
+        return db_profile
+    db_profile = Profile(**profile.model_dump(), user_id=user.id)
+    session.add(db_profile)
+    dri_client = DRIClient()
+    background_tasks.add_task(dri_client.fill_profile,db_profile, session)
+    await session.commit()
+    await session.refresh(db_profile)
+    return db_profile
+
+
+@user_router.patch("/profile", response_model=ProfileDetail, status_code=200)
+async def update_user_profile(
+    profile_data: UpdateProfile,
     session: AsyncSession = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
-    result = await session.scalars(select(Profile).where(Profile.user == user))
-    if db_profile := result.first():
-        return db_profile
-    profile.user_id = user.id
-    session.add(profile)
-    await session.commit()
-    return profile
-
-"""
-@user_router.patch("/profile", response_model=Profile, status_code=200)
-async def update_user_profile(
-    profile_data: UpdateProfile,
-    session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
-):
-    profile = session.scalars(
-        select(Profile, User).join(Profile.user).where(User == user)
-    ).first()
+    result = await session.scalars(select(Profile).where(Profile.user_id == user.id))
+    profile = result.first()
     if not profile:
         raise HTTPException(status_code=404, detail="User not found")
-    profile_data = profile_data.dict(exclude_unset=True)
-    for key, value in profile_data.items():
+    for key, value in profile_data.model_dump(exclude_unset=True).items():
         setattr(profile, key, value)
     session.add(profile)
-    session.commit()
-    session.refresh(profile)
+    await session.commit()
+    await session.refresh(profile)
     return profile
-"""
