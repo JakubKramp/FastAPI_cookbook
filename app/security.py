@@ -4,9 +4,11 @@ from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from passlib.context import CryptContext
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlmodel import select
 
+from app.utils.db import get_session
 from auth.exceptions import credentials_exception
 from auth.models import User
 from config import settings
@@ -15,20 +17,21 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-def verify_password(plain_password, hashed_password):
+def verify_password(plain_password, hashed_password)-> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def get_password_hash(password):
+def get_password_hash(password) -> str:
     return pwd_context.hash(password)
 
 
-def get_user(session: Session, username: str):
-    return session.scalars(select(User).where(User.username == username)).first()
+async def get_user(session: AsyncSession, username: str) -> User | None:
+    result = await session.scalars(select(User).where(User.username == username))
+    return result.first()
 
 
-def authenticate_user(username: str, password: str, session: Session):
-    user = get_user(session, username)
+async def authenticate_user(username: str, password: str, session: AsyncSession):
+    user = await get_user(session, username)
     if not user:
         return False
     if not verify_password(password, user.password):
@@ -36,18 +39,18 @@ def authenticate_user(username: str, password: str, session: Session):
     return user
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.now() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 
-async def get_current_username(token: str = Depends(oauth2_scheme)):
+async def get_current_user(token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_session)) -> User | None:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
@@ -55,4 +58,8 @@ async def get_current_username(token: str = Depends(oauth2_scheme)):
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    return username
+    result = await session.scalars(
+        select(User).options(selectinload(User.profile))
+    )
+    user = result.first()
+    return user

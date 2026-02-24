@@ -6,26 +6,34 @@ requires-python = ">=3.13"
 dependencies = [
     "aiohttp>=3.13.3",
     "alembic>=1.18.4",
+    "asyncpg>=0.31.0",
     "django-environ>=0.13.0",
     "fastapi>=0.131.0",
     "httpx>=0.28.1",
     "passlib[bcrypt]>=1.7.4",
+    "bcrypt==4.3.0", # We are pinning this because version 5 causes problems with password hashing
     "playwright>=1.58.0",
     "psycopg2-binary>=2.9.11",
     "python-jose[cryptography]>=3.5.0",
     "python-multipart>=0.0.22",
     "sqlalchemy>=2.0.46",
+    "sqlalchemy-utils>=0.42.1",
     "sqlmodel>=0.0.37",
     "uvicorn>=0.41.0",
+    "pytest>=9.0.2",
 ]
 
-
-[tool.ruff]
-line-length = 110
-extend-exclude = ['migrations/']
 
 [dependency-groups]
 ci = [
     "ruff>=0.15.2",
     "ty>=0.0.18",
 ]
+
+[tool.ty.src]
+exclude = ["migrations/", '.venv/', 'recipes/']
+
+
+[tool.ruff]
+line-length = 110
+extend-exclude = ['migrations/']

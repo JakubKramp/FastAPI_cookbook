@@ -1,4 +1,4 @@
-from sqlalchemy import func
+from sqlalchemy import func, select
 from sqlmodel import Session
 from starlette.testclient import TestClient
 
@@ -12,7 +12,7 @@ def test_create_user(client: TestClient, session: Session):
         "email": "testemail@test.com",
     }
     response = client.post("/user", json=user)
-    assert session.query(func.count(User.id)).scalar() == 1
+    assert session.exec(select(func.count()).select_from(User)) == 1
     assert response.status_code == 201
 
 

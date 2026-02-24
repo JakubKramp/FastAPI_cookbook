@@ -1,21 +1,28 @@
-from fastapi import FastAPI
-from sqlmodel import create_engine, SQLModel
+from contextlib import asynccontextmanager
 
+from fastapi import FastAPI
+from sqlalchemy.ext.asyncio import create_async_engine
+
+from app.utils.db import Base
 from config import settings
 from auth.routes import user_router
-from recipes.routes import ingredient_router
 
-app = FastAPI()
 
+
+
+engine = create_async_engine(settings.DATABASE_URL)
+
+
+async def create_db_and_tables() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("start")
+    await create_db_and_tables()
+    yield
+
+app = FastAPI(lifespan=lifespan)
 app.include_router(user_router)
-app.include_router(ingredient_router)
-
-engine = create_engine(settings.DATABASE_URL)
-
-
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
-
-
-if __name__ == "__main__":
-    create_db_and_tables()
+#app.include_router(ingredient_router)

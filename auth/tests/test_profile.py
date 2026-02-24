@@ -40,7 +40,7 @@ def test_create_profile_unauthorized(client: TestClient, session: Session):
     assert response.status_code == 401
 
 
-def test_update_profile(client: TestClient, session: Session, user: User):
+def test_update_profile(client: TestClient, user: User):
     login_data = dict(username=user.username, password="test_password")
     response = client.post(
         "/user/login",
@@ -56,7 +56,7 @@ def test_update_profile(client: TestClient, session: Session, user: User):
         "activity_factor": "Little/no exercise",
         "smoking": True,
     }
-    response = client.post("/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"})
+    client.post("/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"})
     profile = {
         "sex": "female",
         "age": 35,
