@@ -14,7 +14,6 @@ dependencies = [
     "bcrypt==4.3.0", # We are pinning this because version 5 causes problems with password hashing
     "playwright>=1.58.0",
     "psycopg2-binary>=2.9.11",
-    "pytest>=9.0.2",
     "python-jose[cryptography]>=3.5.0",
     "python-multipart>=0.0.22",
     "sqlalchemy>=2.0.46",
