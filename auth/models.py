@@ -51,6 +51,7 @@ class Profile(Base):
     user: Mapped["User | None"] = relationship(
         back_populates="profile",
         uselist=False,
+        lazy='selectin'
     )
 
 

@@ -30,7 +30,8 @@ class Ingredient(Base):
 
     # Relationships
     ingredient_items: Mapped[List["IngredientItem"]] = relationship(
-        back_populates="ingredient"
+        back_populates="ingredient",
+        lazy = 'selectin'
     )
 
     def __repr__(self):
@@ -59,7 +60,8 @@ class Dish(Base):
     recipe: Mapped[str | None] = mapped_column(Text)
 
     ingredients: Mapped[List["IngredientItem"]] = relationship(
-        back_populates="dish"
+        back_populates="dish",
+        lazy = 'selectin'
     )
 
 
@@ -75,10 +77,12 @@ class IngredientItem(Base):
 
     ingredient_id: Mapped[int | None] = mapped_column(ForeignKey("ingredient.id"))
     ingredient: Mapped["Ingredient | None"] = relationship(
-        back_populates="ingredient_items"
+        back_populates="ingredient_items",
+        lazy = 'selectin'
     )
 
     dish_id: Mapped[int | None] = mapped_column(ForeignKey("dish.id"))
     dish: Mapped["Dish | None"] = relationship(
-        back_populates="ingredients"
+        back_populates="ingredients",
+        lazy='selectin'
     )
