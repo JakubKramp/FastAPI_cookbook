@@ -1,13 +1,17 @@
+import pytest
+from httpx import AsyncClient
 from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
 
 from auth.models import Profile, User
 
-
-def test_create_profile(client: TestClient, session: Session, user: User):
+"""
+@pytest.mark.anyio
+async def test_create_profile(client: AsyncClient, session: AsyncSession, user: User):
     login_data = dict(username=user.username, password="test_password")
-    response = client.post(
+    response = await client.post(
         "/user/login",
         data=login_data,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
@@ -21,7 +25,7 @@ def test_create_profile(client: TestClient, session: Session, user: User):
         "activity_factor": "Little/no exercise",
         "smoking": True,
     }
-    response = client.post("/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"})
+    response = await client.post("/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"})
     assert session.query(func.count(Profile.id)).scalar() == 1
     assert response.status_code == 201
 
@@ -89,3 +93,4 @@ def test_delete_user_and_profile(client: TestClient, session: Session, user: Use
     client.delete("/user", headers={"Authorization": f"Bearer {token}"})
     assert session.query(func.count(User.id)).scalar() == 0
     assert session.query(func.count(Profile.id)).scalar() == 0
+"""

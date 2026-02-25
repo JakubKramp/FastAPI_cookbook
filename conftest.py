@@ -1,42 +1,67 @@
-import pytest
-from sqlalchemy_utils import create_database, drop_database
-from sqlmodel import create_engine, SQLModel, Session
-from starlette.testclient import TestClient
+import asyncio
 
+import pytest
+import pytest_asyncio
+from fastapi import FastAPI
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from app.main import app
-from app.utils.db import get_session
+from app.utils.db import get_session, Base
 from config import settings
 
 
-@pytest.fixture(name="engine", scope="session")
-def db_engine():
-    engine = create_engine(settings.TEST_DATABASE_URL)
-    yield engine
 
-
-@pytest.fixture(name="db", scope="session", autouse=True)
-def database_setup(engine):
-    create_database(engine.url)
-    SQLModel.metadata.create_all(engine)
-    yield
-    drop_database(engine.url)
-
-
-@pytest.fixture(name="session", scope="function", autouse=True)
-def session_fixture(engine):
-    SQLModel.metadata.create_all(engine)
-    with Session(engine) as session:
+@pytest_asyncio.fixture(name="session", scope="function", autouse=True)
+async def session_fixture(engine):
+    async with AsyncSession(engine) as session:
         yield session
-    SQLModel.metadata.drop_all(engine)
+        # truncate all tables after each test
+        for table in reversed(Base.metadata.sorted_tables):
+            await session.execute(table.delete())
+        await session.commit()
+
+@pytest_asyncio.fixture(name="engine", scope="function")
+async def db_engine():
+    engine = create_async_engine(settings.TEST_DATABASE_URL)
+    yield engine
+    await engine.dispose()
 
 
-@pytest.fixture(name="client")
-def client_fixture(session: Session):
-    def get_session_override():
-        return session
+@pytest_asyncio.fixture(name="db", scope="function", autouse=True)
+async def database_setup(engine):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
-    app.dependency_overrides[get_session] = get_session_override
 
-    client = TestClient(app)
-    yield client
+
+from httpx import AsyncClient, ASGITransport
+
+@pytest_asyncio.fixture(name="client")
+async def client_fixture(engine):
+    async with AsyncSession(engine) as session:
+        async def get_session_override():
+            yield session
+
+        app.dependency_overrides[get_session] = get_session_override
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            yield client
+
+        await session.rollback()
+        for table in reversed(Base.metadata.sorted_tables):
+            await session.execute(table.delete())
+        await session.commit()
+
     app.dependency_overrides.clear()
+
+@pytest_asyncio.fixture(name="session")
+async def session_fixture(engine):
+    async with AsyncSession(engine) as session:
+        yield session
+        await session.rollback()
+        for table in reversed(Base.metadata.sorted_tables):
+            await session.execute(table.delete())
+        await session.commit()

@@ -1,21 +1,14 @@
-import pytest
-from sqlalchemy.orm import Session
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.security import get_password_hash
 from auth.models import User
 
-
-@pytest.fixture(name="user")
-def create_user_fixture(session: Session)-> User:
-    password = "test_password"
-    hashed_password = get_password_hash(password)
-    user = User(username="testuser", password=hashed_password, email="testemail@test.com")
-    session.add(user)
-    session.commit()
-    return user
-
-"""
-@pytest.fixture(scope="function", autouse=True)
-def mock_selenium_api(monkeypatch):
-    monkeypatch.setattr(scrap.Scrapper, "get_DRI", lambda x: None)
-"""
+@pytest_asyncio.fixture(name="user")
+async def create_user_fixture(engine) -> User:
+    async with AsyncSession(engine, expire_on_commit=False) as session:
+        user = User(username="testuser", password=get_password_hash("test_password"), email="testemail@test.com")
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+    return user  # session closed, user attributes already loaded
