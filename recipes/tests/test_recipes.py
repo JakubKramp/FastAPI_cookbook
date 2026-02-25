@@ -1,13 +1,11 @@
 from unittest.mock import AsyncMock
 
 import pytest
-from fastapi.testclient import TestClient
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from recipes.models import Ingredient, Dish, IngredientItem
-from recipes.schemas import CreateIngredient
 
 @pytest.mark.asyncio
 async def test_get_ingredient(session: AsyncSession, client: AsyncClient, db_ingredient: Ingredient):
