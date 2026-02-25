@@ -1,15 +1,14 @@
-"""
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
 
 from auth.models import Profile, User
 
-@pytest.mark.anyio
-async def test_create_profile(client: AsyncClient, session: AsyncSession, user: User):
+@pytest.mark.asyncio
+async def test_create_profile(client: AsyncClient, session: AsyncSession, user: User, profile_data: dict, mock_dri_client):
     login_data = dict(username=user.username, password="test_password")
     response = await client.post(
         "/user/login",
@@ -17,80 +16,54 @@ async def test_create_profile(client: AsyncClient, session: AsyncSession, user: 
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     token = response.json()["access_token"]
-    profile = {
-        "sex": "male",
-        "age": 30,
-        "height": 180,
-        "weight": 80,
-        "activity_factor": "Little/no exercise",
-        "smoking": True,
-    }
-    response = await client.post("/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"})
-    assert session.query(func.count(Profile.id)).scalar() == 1
+    response = await client.post("/user/profile", json=profile_data, headers={"Authorization": f"Bearer {token}"})
+    count = await session.scalar(select(func.count()).select_from(Profile))
+    assert count == 1
     assert response.status_code == 201
 
-
-def test_create_profile_unauthorized(client: TestClient, session: Session):
-    profile = {
-        "sex": "male",
-        "age": 30,
-        "height": 180,
-        "wieght": 80,
-        "activity_factor": "Little/no exercise",
-        "smoking": True,
-    }
-    response = client.post("/user/profile", json=profile)
-    assert session.query(func.count(Profile.id)).scalar() == 0
+@pytest.mark.asyncio
+async def test_create_profile_unauthorized(client: AsyncClient, session: AsyncSession, profile_data: dict):
+    response = await client.post("/user/profile", json=profile_data)
+    count = await session.scalar(select(func.count()).select_from(Profile))
+    assert count == 0
     assert response.status_code == 401
 
-
-def test_update_profile(client: TestClient, user: User):
+@pytest.mark.asyncio
+async def test_update_profile(client: AsyncClient, session: AsyncSession, user: User, profile_data: dict, mock_dri_client):
     login_data = dict(username=user.username, password="test_password")
-    response = client.post(
+    response = await client.post(
         "/user/login",
         data=login_data,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     token = response.json()["access_token"]
+    await client.post("/user/profile", json=profile_data, headers={"Authorization": f"Bearer {token}"})
     profile = {
-        "sex": "male",
-        "age": 30,
-        "height": 180,
-        "weight": 80,
-        "activity_factor": "Little/no exercise",
-        "smoking": True,
-    }
-    client.post("/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"})
-    profile = {
-        "sex": "female",
+        "sex": "Female",
         "age": 35,
     }
-    response = client.patch("/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"})
+    response = await client.patch("/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
-    assert response.json()["sex"] == "female"
+    count = await session.scalar(select(func.count()).select_from(Profile))
+    assert count == 1
+    assert response.json()["sex"] == "Female"
     assert response.json()["age"] == 35
 
-
-def test_delete_user_and_profile(client: TestClient, session: Session, user: User):
+@pytest.mark.asyncio
+async def test_delete_user_and_profile(client: AsyncClient, session: AsyncSession, user: User, profile_data: dict, mock_dri_client):
     login_data = dict(username=user.username, password="test_password")
-    response = client.post(
+    response = await client.post(
         "/user/login",
         data=login_data,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     token = response.json()["access_token"]
-    profile = {
-        "sex": "male",
-        "age": 30,
-        "height": 180,
-        "weight": 80,
-        "activity_factor": "Little/no exercise",
-        "smoking": True,
-    }
-    client.post("/user/profile", json=profile, headers={"Authorization": f"Bearer {token}"})
-    assert session.query(func.count(Profile.id)).scalar() == 1
-    assert session.query(func.count(User.id)).scalar() == 1
-    client.delete("/user", headers={"Authorization": f"Bearer {token}"})
-    assert session.query(func.count(User.id)).scalar() == 0
-    assert session.query(func.count(Profile.id)).scalar() == 0
-"""
+    await client.post("/user/profile", json=profile_data, headers={"Authorization": f"Bearer {token}"})
+    user_count = await session.scalar(select(func.count()).select_from(User))
+    assert user_count == 1
+    profile_count = await session.scalar(select(func.count()).select_from(Profile))
+    assert profile_count == 1
+    r = await client.delete("/user/", headers={"Authorization": f"Bearer {token}"})
+    user_count = await session.scalar(select(func.count()).select_from(User))
+    assert user_count == 0
+
