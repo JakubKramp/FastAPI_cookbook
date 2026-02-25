@@ -1,90 +1,83 @@
-"""
-from fastapi.testclient import TestClient
-from sqlmodel import Session
-from sqlalchemy import func
+from unittest.mock import AsyncMock
+
+import pytest
+from httpx import AsyncClient
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from recipes.models import Ingredient, Dish, IngredientItem
-from recipes.schemas import CreateIngredient
 
-
-def test_get_ingredient(session: Session, client: TestClient, ingredient: Ingredient):
-    session.add(Ingredient.parse_obj(ingredient))
-    session.commit()
-    ingredient_data = session.query(Ingredient).first()
-
-    response = client.get(f"/ingredients/{ingredient_data.id}")
-
-    ingredient["id"] = ingredient_data.id
-
+@pytest.mark.asyncio
+async def test_get_ingredient(session: AsyncSession, client: AsyncClient, db_ingredient: Ingredient):
+    ingredient = await session.scalar(select(Ingredient).limit(1))
+    response = await client.get(f"/ingredients/{ingredient.id}")
+    assert db_ingredient.id == ingredient.id
     assert response.status_code == 200
-    assert ingredient_data == Ingredient.parse_obj(ingredient)
 
 
-def test_get_ingredient_does_not_exist(client: TestClient):
-    response = client.get("/ingredients/1")
-    data = response.json()
-    assert data["detail"] == "Ingredient not found"
+@pytest.mark.asyncio
+async def test_get_ingredient_does_not_exist(client: AsyncClient):
+    response = await client.get("/ingredients/1")
     assert response.status_code == 404
 
-
-def test_list_ingredients(session: Session, client: TestClient, ingredient: Ingredient):
-    db_ingredient = Ingredient.from_orm(CreateIngredient(name="carrot"))
-    db_ingredient1 = Ingredient.from_orm(CreateIngredient(name="broccoli"))
-    session.add(db_ingredient)
+@pytest.mark.asyncio
+async def test_list_ingredients(session: AsyncSession, client: AsyncClient, db_ingredient: Ingredient, mock_nutri_client: AsyncMock):
+    db_ingredient1 = Ingredient(name="broccoli")
     session.add(db_ingredient1)
-    session.commit()
-    response = client.get("/ingredients/")
+    await session.commit()
+    response = await client.get("/ingredients/")
     data = response.json()
     assert response.status_code == 200
     assert len(data) == 2
 
 
-def test_delete_ingredient(session: Session, client: TestClient):
-    db_ingredient = Ingredient.from_orm(CreateIngredient(name="carrot"))
-    session.add(db_ingredient)
-    session.commit()
-    response = client.delete("/ingredients/1")
+@pytest.mark.asyncio
+async def test_delete_ingredient(client: AsyncClient, db_ingredient: Ingredient):
+    response = await client.delete("/ingredients/1")
     assert response.status_code == 204
 
-
-def test_delete_ingredient_does_not_exist(client: TestClient):
-    response = client.delete("/ingredients/1")
+@pytest.mark.asyncio
+async def test_delete_ingredient_does_not_exist(client: AsyncClient):
+    response = await client.delete("/ingredients/1")
     assert response.status_code == 404
 
-
-def test_create_dish(session: Session, client: TestClient, create_dish):
-    response = client.post("/ingredients/dish/", json=create_dish)
-    assert session.query(func.count(Dish.id)).scalar() == 1
-    assert session.query(func.count(IngredientItem.id)).scalar() == 2
+@pytest.mark.asyncio
+async def test_create_dish(session: AsyncSession, client: AsyncClient, create_dish: dict):
+    response = await client.post("/ingredients/dish/", json=create_dish)
+    dish_count = await session.scalar(select(func.count(Dish.id)))
+    assert dish_count == 1
+    ingredient_item_count = await session.scalar(select(func.count(IngredientItem.id)))
+    assert ingredient_item_count  == 2
     assert response.status_code == 201
 
 
-def test_list_dishes(session: Session, client: TestClient, create_dish):
-    client.post("/ingredients/dish/", json=create_dish)
-    response = client.get("/ingredients/dish/")
+@pytest.mark.asyncio
+async def test_list_dishes(client: AsyncClient, create_dish):
+    await client.post("/ingredients/dish/", json=create_dish)
+    response = await client.get("/ingredients/dish/")
     assert len(response.json()) == 1
     assert response.status_code == 200
 
-
-def test_delete_dish(session: Session, client: TestClient, create_dish):
-    client.post("/ingredients/dish/", json=create_dish)
-    response = client.delete("/ingredients/dish/1")
+@pytest.mark.asyncio
+async def test_delete_dish(client: AsyncClient, create_dish):
+    await client.post("/ingredients/dish/", json=create_dish)
+    response = await client.delete("/ingredients/dish/1")
     assert response.status_code == 204
-    assert response.json() == {"message": "Dish 1 deleted"}
 
-
-def test_delete_dish_does_not_exist(session: Session, client: TestClient, create_dish):
-    response = client.delete("/ingredients/dish/1")
+@pytest.mark.asyncio
+async def test_delete_dish_does_not_exist(client: AsyncClient):
+    response = await client.delete("/ingredients/dish/1")
     assert response.status_code == 404
 
 
-def test_dish_detail(session: Session, client: TestClient, create_dish):
-    client.post("/ingredients/dish/", json=create_dish)
-    response = client.get("/ingredients/dish/1")
+@pytest.mark.asyncio
+async def test_dish_detail(client: AsyncClient, create_dish):
+    await client.post("/ingredients/dish/", json=create_dish)
+    response = await client.get("/ingredients/dish/1")
     assert response.status_code == 200
 
-
-def test_dish_detail_does_not_exist(session: Session, client: TestClient, create_dish):
-    response = client.get("/ingredients/dish/1")
+@pytest.mark.asyncio
+async def test_dish_detail_does_not_exist(client: AsyncClient):
+    response = await client.get("/ingredients/dish/1")
     assert response.status_code == 404
-"""
+

@@ -26,16 +26,17 @@ example_ingredient_api_response = [
     }
 ]
 example_create_dish = {
-    "name": "Mashed potatoes",
-    "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
-    "ingredients": [
-        {
-            "amount": 700,
-            "ingredient": {"name": "potato"},
-        },
-        {
-            "amount": 300,
-            "ingredient": {"name": "butter"},
-        },
-    ],
-}
+                "name": "Mashed potatoes",
+                "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
+                "ingredients": [{"amount": 700, "name": "potato"}, {"amount": 300, "name": "butter"}],
+                "nutritional_values": {
+                    "calories": 3339,
+                    "fat_total": 315.04,
+                    "protein": 27.23,
+                    "sodium": 1533,
+                    "potassium": 1533,
+                    "fiber": 10.5,
+                    "carbohydrates_total": 94.43,
+                    "sugar": 10.36,
+                },
+            }
