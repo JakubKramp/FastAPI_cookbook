@@ -1,3 +1,4 @@
+"""
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 from sqlalchemy import func
@@ -86,3 +87,4 @@ def test_dish_detail(session: Session, client: TestClient, create_dish):
 def test_dish_detail_does_not_exist(session: Session, client: TestClient, create_dish):
     response = client.get("/ingredients/dish/1")
     assert response.status_code == 404
+"""

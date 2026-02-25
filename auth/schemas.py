@@ -19,9 +19,9 @@ class UserUpdate(BaseModel):
     """
     This does not inherit from UserList intentionally, because email and username are nullable here.
     """
-    email: str | None
-    username: str | None
-    password: str | None
+    email: str | None = None
+    username: str | None = None
+    password: str | None = None
 
     class Config:
         json_schema_extra = {

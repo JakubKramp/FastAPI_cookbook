@@ -1,21 +1,35 @@
 import pytest
-from sqlalchemy.orm import Session
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from unittest.mock import AsyncMock, patch
 
 from app.security import get_password_hash
 from auth.models import User
 
+@pytest_asyncio.fixture(name="user")
+async def create_user_fixture(engine) -> User:
+    async with AsyncSession(engine, expire_on_commit=False) as session:
+        user = User(username="testuser", password=get_password_hash("test_password"), email="testemail@test.com")
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+    return user  # session closed, user attributes already loaded
 
-@pytest.fixture(name="user")
-def create_user_fixture(session: Session)-> User:
-    password = "test_password"
-    hashed_password = get_password_hash(password)
-    user = User(username="testuser", password=hashed_password, email="testemail@test.com")
-    session.add(user)
-    session.commit()
-    return user
+@pytest_asyncio.fixture(name="profile_data")
+async def profile_data() -> dict[str, str | int| bool]:
+    return {
+        "sex": "Male",
+        "age": 30,
+        "height": 180,
+        "weight": 80,
+        "activity_factor": "Little/no exercise",
+        "smoking": True,
+    }
 
-"""
-@pytest.fixture(scope="function", autouse=True)
-def mock_selenium_api(monkeypatch):
-    monkeypatch.setattr(scrap.Scrapper, "get_DRI", lambda x: None)
-"""
+@pytest.fixture
+def mock_dri_client():
+    with patch("auth.routes.DRIClient") as mock:
+        instance = mock.return_value
+        instance.fill_profile = AsyncMock()
+        yield instance
