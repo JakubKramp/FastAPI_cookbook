@@ -2,8 +2,6 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import Session
-from starlette.testclient import TestClient
 
 from auth.models import User
 

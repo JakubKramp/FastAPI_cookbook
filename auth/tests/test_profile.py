@@ -1,3 +1,4 @@
+"""
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import func
@@ -7,7 +8,6 @@ from starlette.testclient import TestClient
 
 from auth.models import Profile, User
 
-"""
 @pytest.mark.anyio
 async def test_create_profile(client: AsyncClient, session: AsyncSession, user: User):
     login_data = dict(username=user.username, password="test_password")
