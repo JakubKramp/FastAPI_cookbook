@@ -16,7 +16,7 @@ class NutritionalValues(BaseModel):
     sugar: float = 0.0
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "calories": 34,
                 "fat_total": 0.2,
@@ -29,22 +29,20 @@ class NutritionalValues(BaseModel):
             }
         }
 
+
 class CreateIngredient(BaseModel):
     name: str
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "name": "carrot",
             }
         }
 
-class ListIngredient(CreateIngredient):
+
+class ListIngredient(CreateIngredient, NutritionalValues):
     id: int
-    calories: Optional[float] | None = None
-    fat_total: Optional[float] | None = None
-    protein: Optional[float] | None = None
-    carbohydrates_total: Optional[float] | None = None
 
     class Config:
         schema_extra = {
@@ -53,9 +51,14 @@ class ListIngredient(CreateIngredient):
                 "calories": 34,
                 "fat_total": 0.2,
                 "protein": 0.8,
+                "sodium": 57,
+                "potassium": 30,
+                "fiber": 3,
                 "carbohydrates_total": 8.3,
+                "sugar": 3.4,
             }
         }
+
 
 class UpdateIngredient(CreateIngredient):
     calories: Optional[float] | None = None
@@ -70,7 +73,7 @@ class UpdateIngredient(CreateIngredient):
     sugar: Optional[float] | None = None
 
     class Config:
-        schema_extra = {"example": example_ingredient}
+        json_schema_extra = {"example": example_ingredient}
 
 
 class CreateIngredientItem(BaseModel):
@@ -84,7 +87,7 @@ class CreateDish(BaseModel):
     ingredients: List[CreateIngredientItem]
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": 72,
                 "name": "Mashed potatoes",
@@ -115,7 +118,7 @@ class ListDish(BaseModel):
     ingredients: List[ListIngredientItem]
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "id": 72,
                 "name": "Mashed potatoes",
@@ -138,19 +141,20 @@ class DishDetail(ListDish):
     nutritional_values: NutritionalValues | None = None
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
-    "name": "Mashed potatoes",
-    "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
-    "ingredients": [
-        {
-            "amount": 700,
-            "name": "potato"
-        },
-        {
-            "amount": 300,
-            "name": "butter"
-        }
-    ]
-}
+                "name": "Mashed potatoes",
+                "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
+                "ingredients": [{"amount": 700, "name": "potato"}, {"amount": 300, "name": "butter"}],
+                "nutritional_values": {
+                    "calories": 3339,
+                    "fat_total": 315.04,
+                    "protein": 27.23,
+                    "sodium": 1533,
+                    "potassium": 1533,
+                    "fiber": 10.5,
+                    "carbohydrates_total": 94.43,
+                    "sugar": 10.36,
+                },
+            }
         }

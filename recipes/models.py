@@ -38,20 +38,6 @@ class Ingredient(Base):
         return f"Ingredient {self.name} with an ID of {self.id}"
 
 
-
-
-# Currently SQLAlchemy does not support async event handling,
-# thats why setting nutritional values is currently done in the Background Tasks
-# @listens_for(Ingredient, "before_insert")
-# async def set_nutritional_values(mapper, connection, target):
-#     client = NutritionalAPIClient()
-#     nutrition_data = await client.get_nutritional_values(target)
-#     for key, value in nutrition_data.items():
-#         if key.find("_") >= 0:
-#             key = "_".join(key.split("_")[:-1])
-#         target.__setattr__(key, value)
-
-
 class Dish(Base):
     __tablename__ = "dish"
 

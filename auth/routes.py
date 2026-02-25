@@ -3,10 +3,10 @@ from datetime import timedelta
 from fastapi import APIRouter, Response, BackgroundTasks
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlmodel import select
 from starlette import status
 
 from app.security import (
