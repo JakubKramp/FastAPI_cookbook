@@ -40,10 +40,11 @@ class CreateIngredient(BaseModel):
         }
 
 class ListIngredient(CreateIngredient):
-    calories: Optional[float]
-    fat_total: Optional[float]
-    protein: Optional[float]
-    carbohydrates_total: Optional[float]
+    id: int
+    calories: Optional[float] | None = None
+    fat_total: Optional[float] | None = None
+    protein: Optional[float] | None = None
+    carbohydrates_total: Optional[float] | None = None
 
     class Config:
         schema_extra = {
@@ -56,37 +57,25 @@ class ListIngredient(CreateIngredient):
             }
         }
 
-class UpdateIngredient(ListIngredient):
-    fat_saturated: Optional[float]
-    sodium: Optional[float]
-    potassium: Optional[float]
-    cholesterol: Optional[float]
-    fiber: Optional[float]
-    sugar: Optional[float]
+class UpdateIngredient(CreateIngredient):
+    calories: Optional[float] | None = None
+    fat_total: Optional[float] | None = None
+    protein: Optional[float] | None = None
+    carbohydrates_total: Optional[float] | None = None
+    fat_saturated: Optional[float] | None = None
+    sodium: Optional[float] | None = None
+    potassium: Optional[float] | None = None
+    cholesterol: Optional[float] | None = None
+    fiber: Optional[float] | None = None
+    sugar: Optional[float] | None = None
 
     class Config:
         schema_extra = {"example": example_ingredient}
 
+
 class CreateIngredientItem(BaseModel):
-    ingredient: CreateIngredient
+    name: str
     amount: int
-
-class ListIngredient(CreateIngredient):
-    calories: Optional[float]
-    fat_total: Optional[float]
-    protein: Optional[float]
-    carbohydrates_total: Optional[float]
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "name": "carrot",
-                "calories": 34,
-                "fat_total": 0.2,
-                "protein": 0.8,
-                "carbohydrates_total": 8.3,
-            }
-        }
 
 
 class CreateDish(BaseModel):
@@ -103,19 +92,15 @@ class CreateDish(BaseModel):
                 "ingredients": [
                     {
                         "amount": 700,
-                        "ingredient": {"name": "potato"},
+                        "name": "potato",
                     },
                     {
                         "amount": 300,
-                        "ingredient": {"name": "butter"},
+                        "name": "butter",
                     },
                 ],
             }
         }
-
-class CreateIngredientItem(BaseModel):
-    ingredient: CreateIngredient
-    amount: int
 
 
 class ListIngredientItem(BaseModel):
@@ -150,22 +135,22 @@ class ListDish(BaseModel):
 
 
 class DishDetail(ListDish):
-    nutritional_values: NutritionalValues
+    nutritional_values: NutritionalValues | None = None
 
     class Config:
         schema_extra = {
             "example": {
-                "name": "Mashed potatoes",
-                "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
-                "ingredients": [
-                    {
-                        "amount": 700,
-                        "ingredient": {"name": "potato"},
-                    },
-                    {
-                        "amount": 300,
-                        "ingredient": {"name": "butter"},
-                    },
-                ],
-            }
+    "name": "Mashed potatoes",
+    "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
+    "ingredients": [
+        {
+            "amount": 700,
+            "name": "potato"
+        },
+        {
+            "amount": 300,
+            "name": "butter"
+        }
+    ]
+}
         }

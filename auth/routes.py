@@ -23,7 +23,7 @@ from auth.models import (
 
 )
 from app.utils.db import get_session
-from scrap import DRIClient
+from auth.dri_scrapper import DRIClient
 
 user_router = APIRouter(prefix="/user", tags=["auth"])
 
@@ -83,7 +83,7 @@ async def update_user(
 async def delete_user(session: AsyncSession = Depends(get_session), user: User = Depends(get_current_user)) -> Response:
     await session.delete(user)
     await session.commit()
-    return Response(status_code=204, content=f"User {user.id} deleted")
+    return Response(content='', status_code=204)
 
 
 @user_router.post("/login", response_model=Token)
