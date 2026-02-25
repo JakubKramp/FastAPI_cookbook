@@ -2,6 +2,8 @@ import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from unittest.mock import AsyncMock, patch
+
 from app.security import get_password_hash
 from auth.models import User
 
@@ -24,8 +26,6 @@ async def profile_data() -> dict[str, str | int| bool]:
         "activity_factor": "Little/no exercise",
         "smoking": True,
     }
-
-from unittest.mock import AsyncMock, patch
 
 @pytest.fixture
 def mock_dri_client():

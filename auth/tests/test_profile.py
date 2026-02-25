@@ -2,9 +2,6 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
-from starlette.testclient import TestClient
-
 from auth.models import Profile, User
 
 @pytest.mark.asyncio
@@ -63,7 +60,7 @@ async def test_delete_user_and_profile(client: AsyncClient, session: AsyncSessio
     assert user_count == 1
     profile_count = await session.scalar(select(func.count()).select_from(Profile))
     assert profile_count == 1
-    r = await client.delete("/user/", headers={"Authorization": f"Bearer {token}"})
+    await client.delete("/user/", headers={"Authorization": f"Bearer {token}"})
     user_count = await session.scalar(select(func.count()).select_from(User))
     assert user_count == 0
 
