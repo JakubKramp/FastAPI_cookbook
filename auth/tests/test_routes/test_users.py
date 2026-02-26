@@ -53,17 +53,6 @@ async def test_login_wrong_password(client: AsyncClient, user: User):
 
 
 @pytest.mark.asyncio
-async def test_login_wrong_password(client: AsyncClient, user: User):
-    login_data = dict(username=user.username, password="wrong_test_password")
-    response = await client.post(
-        "/user/login",
-        data=login_data,
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
-    )
-    assert response.status_code == 401
-    assert response.json()["detail"]
-
-@pytest.mark.asyncio
 async def test_user_me(client: AsyncClient, user: User):
     login_data = dict(username=user.username, password="test_password")
     response = await client.post(

@@ -1,6 +1,5 @@
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from unittest.mock import AsyncMock, patch
 

@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.security import get_password_hash, verify_password, get_user, authenticate_user
+from app.security import get_password_hash, verify_password, get_user
 from auth.models import User
 
 
