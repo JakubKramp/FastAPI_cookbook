@@ -6,10 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from recipes.models import Ingredient
 from recipes.nutritional_data import NutritionalAPIClient
-from recipes.tests.test_data import (
-    example_create_dish,
-    example_ingredient,
-)
+from recipes.tests.test_data.recipes import example_ingredient, example_create_dish
 
 
 @pytest.fixture(name="ingredient")
@@ -17,8 +14,8 @@ def ingredient_fixture():
     return example_ingredient.copy()
 
 @pytest_asyncio.fixture(name="db_ingredient")
-async def database_ingredient_fixture(session: AsyncSession) -> Ingredient:
-    db_ingredient = Ingredient(**example_ingredient)
+async def database_ingredient_fixture(session: AsyncSession, ingredient: dict[str, int|str]) -> Ingredient:
+    db_ingredient = Ingredient(**ingredient)
     session.add(db_ingredient)
     await session.commit()
     await session.refresh(db_ingredient)

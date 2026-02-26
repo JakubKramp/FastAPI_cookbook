@@ -37,6 +37,12 @@ user_router = APIRouter(prefix="/user", tags=["auth"])
 
 @user_router.post("/", response_model=UserList, status_code=201)
 async def sign_up(user: UserCreate, session: AsyncSession = Depends(get_session)) -> User:
+    """
+    Creates new user. \n
+    Return status code: \n
+    201 - Successfully created a user \n
+    409 - Username/email is taken.
+    """
     db_user = User(
         username=user.username,
         email=user.email,
@@ -53,11 +59,25 @@ async def sign_up(user: UserCreate, session: AsyncSession = Depends(get_session)
 
 @user_router.get("/me", response_model=UserDetail, status_code=200)
 async def current_user(user: User = Depends(get_current_user)) -> User:
+    """
+    Returns data about currently logged-in user.
+    Note that it has to be higher than user-detail, because of route resolution order. \n
+    Return status code: \n
+    200 - Successfully returned user data \n
+    401 - User not authenticated
+    """
+    print(user)
     return user
 
 
 @user_router.get("/{user_id}", response_model=UserDetail, status_code=200)
 async def user_detail(user_id: int, session: AsyncSession = Depends(get_session)) -> User:
+    """
+    Returns data about user with given id. \n
+    Return status code: \n
+    200 - Successfully returned user data \n
+    404 - User not found
+    """
     user = await session.execute(
         select(User)
         .options(selectinload(User.profile))
@@ -75,6 +95,12 @@ async def update_user(
     session: AsyncSession = Depends(get_session),
     user: User = Depends(get_current_user),
 ) -> User:
+    """
+    Update currently logged-in user. \n
+    Return status code: \n
+    200 - Successfully updated user \n
+    401 - User not authenticated
+    """
     user_data = user_data.model_dump(exclude_unset=True)
     for key, value in user_data.items():
         if key == "password":
@@ -88,6 +114,12 @@ async def update_user(
 
 @user_router.delete("/", status_code=204)
 async def delete_user(session: AsyncSession = Depends(get_session), user: User = Depends(get_current_user)) -> Response:
+    """
+    Delete currently logged-in user.
+    Return status code:
+    204 - Successfully deleted user
+    401 - User not authenticated
+    """
     await session.delete(user)
     await session.commit()
     return Response(content='', status_code=204)
@@ -98,6 +130,12 @@ async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: AsyncSession = Depends(get_session),
 ):
+    """
+    Returns JWT access token.
+    Return status code:
+    200 - Successfully logged in user
+    401 - Invalid credentials
+    """
     user = await authenticate_user(form_data.username, form_data.password, session)
     if not user:
         raise credentials_exception
@@ -113,6 +151,13 @@ async def create_user_profile(
         session: AsyncSession = Depends(get_session),
         user: User = Depends(get_current_user),
 ):
+    """
+    Creates user profile for current user.
+    If playwright is installed DRI data will be automatically scrapped via a background task.
+    Return status code:
+    201 - Successfully created user profile
+    401 - User not authenticated
+    """
     result = await session.scalars(select(Profile).where(Profile.user_id == user.id))
     if db_profile := result.first():
         return db_profile
@@ -131,6 +176,13 @@ async def update_user_profile(
     session: AsyncSession = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
+    """
+    Updates user profile for current user.
+    Updating profile does not affect the DRI.
+    Return status code:
+    200 - Successfully updated user
+    401 - User not authenticated
+    """
     result = await session.scalars(select(Profile).where(Profile.user_id == user.id))
     profile = result.first()
     if not profile:

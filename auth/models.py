@@ -7,6 +7,11 @@ from auth.constants import ActivityFactor, SexEnum
 
 
 class User(Base):
+    """
+    Table representing a user.
+    Relations:
+    - Profile (auth) one to one
+    """
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -21,6 +26,11 @@ class User(Base):
         return f"User(id={self.id!r}, name={self.username!r})"
 
 class Profile(Base):
+    """
+    Table representing a profile. DRI data is scrapped automatically.
+    Relations:
+    - User (auth) one to one
+    """
     __tablename__ = "profile"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -50,9 +60,4 @@ class Profile(Base):
         lazy='selectin'
     )
 
-
-@listens_for(Profile, "before_insert")
-def set_dietary_reference_intakes(mapper, connection, target):
-    pass
-    #Scrapper.get_DRI(target)
 

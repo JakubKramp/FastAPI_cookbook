@@ -7,7 +7,7 @@ from auth.models import Profile, User
 
 
 @pytest.mark.asyncio
-async def test_create_profile(client: AsyncClient, session: AsyncSession, user: User, profile_data: dict, mock_dri_client):
+async def test_create_profile(client: AsyncClient, session: AsyncSession, user: User, profile_data: dict):
     login_data = dict(username=user.username, password="test_password")
     response = await client.post(
         "/user/login",
@@ -28,7 +28,7 @@ async def test_create_profile_unauthorized(client: AsyncClient, session: AsyncSe
     assert response.status_code == 401
 
 @pytest.mark.asyncio
-async def test_update_profile(client: AsyncClient, session: AsyncSession, user: User, profile_data: dict, mock_dri_client):
+async def test_update_profile(client: AsyncClient, session: AsyncSession, user: User, profile_data: dict):
     login_data = dict(username=user.username, password="test_password")
     response = await client.post(
         "/user/login",
@@ -49,7 +49,7 @@ async def test_update_profile(client: AsyncClient, session: AsyncSession, user: 
     assert response.json()["age"] == 35
 
 @pytest.mark.asyncio
-async def test_delete_user_and_profile(client: AsyncClient, session: AsyncSession, user: User, profile_data: dict, mock_dri_client):
+async def test_delete_user_and_profile(client: AsyncClient, session: AsyncSession, user: User, profile_data: dict):
     login_data = dict(username=user.username, password="test_password")
     response = await client.post(
         "/user/login",

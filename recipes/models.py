@@ -9,6 +9,8 @@ from app.utils.db import Base
 class Ingredient(Base):
     """
     Nutritional values by default refer to 100g serving.
+    Relations:
+    - IngredientItem(recipes) one to many
     """
     __tablename__ = "ingredient"
     __table_args__ = (UniqueConstraint("name"),)
@@ -39,6 +41,11 @@ class Ingredient(Base):
 
 
 class Dish(Base):
+    """
+    Model that represents a recipe
+    Relations:
+    - IngredientItem(recipes) one to many
+    """
     __tablename__ = "dish"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -55,6 +62,9 @@ class IngredientItem(Base):
     """
     Proxy between Ingredient and Dish, allowing us to set amount of produce for each dish.
     Amount is in grams.
+    Relations:
+    - Ingredient(recipes) many to one
+    - Dish(ingredients) many to one
     """
     __tablename__ = "ingredientitem"
 

@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock
-
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import func, select
@@ -22,7 +20,7 @@ async def test_get_ingredient_does_not_exist(client: AsyncClient):
     assert response.status_code == 404
 
 @pytest.mark.asyncio
-async def test_list_ingredients(session: AsyncSession, client: AsyncClient, db_ingredient: Ingredient, mock_nutri_client: AsyncMock):
+async def test_list_ingredients(session: AsyncSession, client: AsyncClient, db_ingredient: Ingredient):
     db_ingredient1 = Ingredient(name="broccoli")
     session.add(db_ingredient1)
     await session.commit()

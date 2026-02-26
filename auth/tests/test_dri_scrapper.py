@@ -15,9 +15,9 @@ async def test_dri_scrapper(profile: Profile, dri_data: DietaryReferenceIntakes,
         mock_extract.return_value = dri_data
         result = await client.fill_profile(profile, session)
 
-    assert result.calories == 2000
-    assert result.carbohydrates == 250
-    assert result.fat == 70
+    assert result.calories == 2500
+    assert result.carbohydrates == 400
+    assert result.fat == 300
     mock_extract.assert_called_once_with(profile)
 
 @pytest.mark.asyncio

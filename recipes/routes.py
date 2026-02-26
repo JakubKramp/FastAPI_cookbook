@@ -29,6 +29,12 @@ async def create_ingredient(
     background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_session),
 ):
+    """
+    Creates new ingredient.
+    Nutritional values are filled from an API via a background task.
+    Return status code:
+    201 - Successfully created an ingredient
+    """
     result = await session.scalar(select(Ingredient).where(Ingredient.name == ingredient.name.lower()))
     if result:
         await session.refresh(result)
@@ -45,6 +51,12 @@ async def create_ingredient(
 
 @ingredient_router.get("/{ingredient_id}", response_model=ListIngredient, status_code=200)
 async def ingredient_detail(ingredient_id: int, session: AsyncSession = Depends(get_session)):
+    """
+    Returns information about an ingredient and its nutritional values.
+    Return status code:
+    200 - Successful response
+    404 - Ingredient not found
+    """
     ingredient = await session.get(Ingredient, ingredient_id)
     if not ingredient:
         raise HTTPException(status_code=404, detail="Ingredient not found")
@@ -53,6 +65,11 @@ async def ingredient_detail(ingredient_id: int, session: AsyncSession = Depends(
 
 @ingredient_router.get("/", response_model=list[ListIngredient], status_code=200)
 async def ingredient_list(session: AsyncSession = Depends(get_session)):
+    """
+    Returns list of ingredients.
+    Return status code:
+    200 - Successful response
+    """
     result = await session.scalars(select(Ingredient))
     ingredients = result.all()
     return ingredients
@@ -65,7 +82,13 @@ async def update_ingredient(
     ingredient_data: UpdateIngredient,
     session: AsyncSession = Depends(get_session),
 ):
-
+    """
+    Updates ingredient data.
+    Nutritional values are not impacted
+    Return status code:
+    200 - Successfully updated an ingredient
+    404 - Ingredient not found
+    """
     ingredient = await session.get(Ingredient, ingredient_id)
     if not ingredient:
         raise HTTPException(status_code=404, detail="Ingredient not found")
@@ -80,6 +103,12 @@ async def update_ingredient(
 
 @ingredient_router.delete("/{ingredient_id}", status_code=204)
 async def delete_ingredient(ingredient_id: int, session: AsyncSession = Depends(get_session)):
+    """
+    Deletes ingredient with given id
+    Return status code:
+    204 - Successfully deleted an ingredient
+    404 - Ingredient not found
+    """
     ingredient = await session.get(Ingredient, ingredient_id)
     if not ingredient:
         raise HTTPException(status_code=404, detail="Ingredient not found")
@@ -96,6 +125,12 @@ async def delete_ingredient(ingredient_id: int, session: AsyncSession = Depends(
     response_description="Created dish",
 )
 async def create_dish(dish_data: CreateDish, session: AsyncSession = Depends(get_session)):
+    """
+    Create a new dish.
+    If ingredient doesn't exist in the database it is created aswell.
+    Return status code:
+    201 - Successfully created a dish
+    """
     dish_dict = dish_data.model_dump()
     ingredients = dish_dict.pop("ingredients")
 
@@ -135,6 +170,11 @@ async def create_dish(dish_data: CreateDish, session: AsyncSession = Depends(get
 
 @ingredient_router.get("/dish/", response_model=list[ListDish], status_code=200)
 async def dish_list(session: AsyncSession = Depends(get_session)):
+    """
+    Returns list of dishes.
+    Return status code:
+    200 - Successful response
+    """
     result = await session.scalars(select(Dish))
     dishes = result.all()
     return dishes
@@ -142,6 +182,12 @@ async def dish_list(session: AsyncSession = Depends(get_session)):
 
 @ingredient_router.delete("/dish/{dish_id}", status_code=204)
 async def delete_dish(dish_id: int, session: AsyncSession = Depends(get_session)):
+    """
+    Deletes dish with given id
+    Return status code:
+    204 - Successfully deleted a dish
+    404 - Dish not found
+    """
     dish = await session.get(Dish, dish_id)
     if not dish:
         raise HTTPException(status_code=404, detail="Dish not found")
@@ -152,6 +198,13 @@ async def delete_dish(dish_id: int, session: AsyncSession = Depends(get_session)
 
 @ingredient_router.get("/dish/{dish_id}", response_model=DishDetail, status_code=200)
 async def dish_detail(dish_id: int, session: AsyncSession = Depends(get_session)):
+    """
+    Returns dish with given id
+    Nutritional values are calculated from related ingredients.
+    Return status code:
+    200 - Successfully fetched a dish
+    404 - Dish not found
+    """
     dish = await session.get(Dish, dish_id)
     if not dish:
         raise HTTPException(status_code=404, detail="Dish not found")

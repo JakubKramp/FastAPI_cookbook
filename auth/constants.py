@@ -3,11 +3,17 @@ from dataclasses import dataclass
 
 
 class SexEnum(str, enum.Enum):
+    """
+    Enum to match values in the DRI client
+    """
     MALE = "Male"
     FEMALE = "Female"
 
 
 class ActivityFactor(str, enum.Enum):
+    """
+    Enum to match values in the DRI client
+    """
     little = "Little/no exercise"
     one_time = "Exercise 1-2 times/week"
     two_times = "Exercise 2-3 times/week"
@@ -17,6 +23,9 @@ class ActivityFactor(str, enum.Enum):
 
 @dataclass
 class Range:
+    """
+    Dataclass to match values in the DRI client
+    """
     low: int
     high: int
 

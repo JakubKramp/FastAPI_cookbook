@@ -1,5 +1,3 @@
-from auth.tests import test_routes
-
 FILES_TO_CREATE = ['__init__.py', 'routes.py', 'schemas.py', 'models.py']
 DIRECTORIES_TO_CREATE = ['tests']
 TEST_FILES_TO_CREATE = ['test_routes.py', 'test_models.py', 'conftest.py']

@@ -35,6 +35,9 @@ class BaseDRIClient:
 
 
 async def get_table_data(page) -> dict[str, str]:
+    """
+    Extracts table data form the DRI page
+    """
     tables = await page.locator('table').all()
     data = {}
     for table in tables:
@@ -56,44 +59,73 @@ class DRIClient(BaseDRIClient):
         "Potassium": "potassium",
         "Total fiber": "fiber",
     }
+
     def __init__(self):
+        """
+        We put the setter functions into one variable to call them more elegantly
+        """
         self.setter_functions = [
             method for name, method in inspect.getmembers(self, predicate=inspect.ismethod)
             if name.startswith("set_")
         ]
 
     async def set_height(self, page, profile) -> None:
+        """
+        Set the height value on the DRI page.
+        """
         height_input = page.locator('[data-cwv-id="calculator-block_variable-numerical-input_native"]').nth(0)
         await height_input.click()
         await height_input.fill(str(profile.height))
 
     async def set_weight(self, page, profile) -> None:
+        """
+        Set the weight value on the DRI page.
+        """
         weight_input = page.locator('[data-testid="blockGroups.0.matrices.4.columns.0.0-input"]')
         await weight_input.click()
         await weight_input.fill(str(profile.weight))
 
     async def set_activity(self, page,  profile) -> None:
+        """
+        Set the activity value on the DRI page.
+        """
         activity_select = page.locator('[id="blockGroups.0.matrices.6.columns.0.0-input"]')
         await activity_select.select_option(label=profile.activity_factor)
 
     async def set_smoking(self, page, profile) -> None:
+        """
+        Set the smoking value on the DRI page.
+        """
         if profile.smoking:
             await page.locator('input[value="EF0hpa8mMsL4Ba0MSPGWM"]').click()
 
     async def set_age(self, page, profile) -> None:
+        """
+        Set the age value on the DRI page.
+        """
         age_select = page.locator('[id="blockGroups.0.matrices.2.columns.0.0-input"]')
         await age_select.select_option(label=self.get_age(profile.age))
 
     async def set_sex(self, page, profile):
+        """
+        Set the sex value on the DRI page.
+        """
         sex_radiogroup = page.locator('[role="radiogroup"][data-cwv-id="calculator-block_variable-value_select-radio"]')
         await sex_radiogroup.get_by_role("radio", name=profile.sex, exact=True).check()
 
     async def fill_form(self, page, profile) -> None:
+        """
+        Fill the form on DRI page with profile data.
+        """
         for setter in self.setter_functions:
             await setter(page, profile)
 
     @staticmethod
     async def process_value(value: str) -> float:
+        """
+        The data scrapped from DRI page is either in grams or milligrams,
+        but in our dataabse everything is in grams.
+        """
         value, unit = value.strip().split(" ")
         if unit == 'grams':
             if '-' in value:
@@ -107,6 +139,9 @@ class DRIClient(BaseDRIClient):
 
 
     async def extract_data(self, profile) -> DietaryReferenceIntakes:
+        """
+        For testability reasons, we encapsulate the whole scrapping process into one function.
+        """
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
@@ -124,6 +159,9 @@ class DRIClient(BaseDRIClient):
             return DietaryReferenceIntakes(**dri_data)
 
     async def fill_profile(self, profile: Profile, session: AsyncSession) -> Profile:
+        """
+        Fill the profile with the scrapped data.
+        """
         dri_data = await self.extract_data(profile)
 
         for field in ["calories", "carbohydrates", "fat", "protein", "fiber", "potassium", "sodium"]:

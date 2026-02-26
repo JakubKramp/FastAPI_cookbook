@@ -22,6 +22,9 @@ async def create_db_and_tables() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    We run alembic migrations before starting the app
+    """
     alembic_cfg = Config("alembic.ini")
     await asyncio.get_event_loop().run_in_executor(None, command.upgrade, alembic_cfg, "head")
     yield

@@ -43,6 +43,9 @@ class NutritionalAPIClient:
 
 
     async def fill_nutritional_values(self, ingredient: Ingredient, session: AsyncSession) -> Ingredient:
+        """
+        Fills the ingredient with the nutritional value from the API.
+        """
         nutri_data = await self.extract_nutritional_values(ingredient.name)
         for field, value in nutri_data.model_dump().items():
             setattr(ingredient, field, value)

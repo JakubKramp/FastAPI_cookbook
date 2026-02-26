@@ -50,7 +50,8 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_session)) -> User | None:
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> User | None:
+    print('xDDD')
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
@@ -58,6 +59,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), session: AsyncSe
             raise credentials_exception
     except JWTError:
         raise credentials_exception
+    return None
     result = await session.scalars(
         select(User).where(User.username==username).options(selectinload(User.profile))
     )
