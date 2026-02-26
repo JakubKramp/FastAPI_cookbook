@@ -45,3 +45,23 @@
 * Add support for international cuisines, and allow users to filter recipes by country or region.
 
 * Implement a feature that allows users to import recipes from external sources, such as food blogs or recipe websites, and automatically parse the ingredients and instructions into your app's data model.
+
+Usage:
+Running pojects:
+docker-compose up --build
+Runing tests:
+docker-compose run api pytest .
+Running tests with coverage:
+docker-compose exec api pytest --cov=recipes --cov=auth --cov-report=term-missing -s
+
+You can install playwright to calculate DRI with commands:
+docker-compose exec api playwright install     
+docker-compose exec api playwright install-deps chromium          
+
+Migrations:
+Creating:
+docker-compose exec api alembic revision --autogenerate -m "<MESSAGE>"       
+Running:
+docker-compose exec api alembic upgrade head          
+Reverting:
+docker-compose exec api alembic downgrade -1 
