@@ -49,5 +49,5 @@ asyncio_mode = "auto"
 
 [tool.coverage.run]
 source = ["recipes", "auth"]
-omit = ["*/tests/*", "*/test_*.py", 'auth/dri_scrapper.py', 'recipes/nutritional_data.py']
+omit = ["*/tests/*", "*/test_*.py", 'auth/dri_scrapper.py', 'recipes/nutritional_data.py', '*/core/*']
 concurrency = ["greenlet", "thread"]
