@@ -2,7 +2,6 @@ import asyncio
 import inspect
 
 from playwright.async_api import async_playwright
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.constants import RANGES

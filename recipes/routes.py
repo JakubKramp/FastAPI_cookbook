@@ -1,18 +1,24 @@
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
-from sqlalchemy import select
-from sqlalchemy import func
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse, Response
 
+from app.utils.db import get_session
 from recipes.models import (
-    Ingredient,
     Dish,
+    Ingredient,
     IngredientItem,
 )
-from app.utils.db import get_session
 from recipes.nutritional_data import NutritionalAPIClient
-from recipes.schemas import CreateIngredient, ListIngredient, UpdateIngredient, CreateDish, DishDetail, ListDish, \
-    NutritionalValues
+from recipes.schemas import (
+    CreateDish,
+    CreateIngredient,
+    DishDetail,
+    ListDish,
+    ListIngredient,
+    NutritionalValues,
+    UpdateIngredient,
+)
 
 ingredient_router = APIRouter(prefix="/ingredients", tags=["ingredients"])
 

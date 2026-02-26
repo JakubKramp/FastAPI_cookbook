@@ -2,12 +2,11 @@ from datetime import datetime, timedelta
 
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
+from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
 
 from app.utils.db import get_session
 from auth.exceptions import credentials_exception

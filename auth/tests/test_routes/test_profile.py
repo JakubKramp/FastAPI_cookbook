@@ -2,7 +2,9 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from auth.models import Profile, User
+
 
 @pytest.mark.asyncio
 async def test_create_profile(client: AsyncClient, session: AsyncSession, user: User, profile_data: dict, mock_dri_client):

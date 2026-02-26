@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from recipes.models import Ingredient
 from recipes.nutritional_data import NutritionalAPIClient
 from recipes.tests.test_data import (
-    example_ingredient,
     example_create_dish,
+    example_ingredient,
 )
 
 

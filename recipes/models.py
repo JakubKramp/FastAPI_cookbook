@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import UniqueConstraint, String, ForeignKey, Text
+from sqlalchemy import ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.utils.db import Base
