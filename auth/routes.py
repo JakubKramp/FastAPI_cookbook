@@ -1,7 +1,6 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, Response, BackgroundTasks
-from fastapi import HTTPException, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -11,18 +10,27 @@ from sqlalchemy.orm import selectinload
 from app.security import (
     authenticate_user,
     create_access_token,
-    get_password_hash,
     get_current_user,
-)
-from auth.exceptions import credentials_exception
-from auth.schemas import Token, UserDetail, UserCreate, UserUpdate, ProfileDetail, UserList, BaseProfile, UpdateProfile
-from config import settings
-from auth.models import (
-    User,
-    Profile,
+    get_password_hash,
 )
 from app.utils.db import get_session
 from auth.dri_scrapper import DRIClient
+from auth.exceptions import credentials_exception
+from auth.models import (
+    Profile,
+    User,
+)
+from auth.schemas import (
+    BaseProfile,
+    ProfileDetail,
+    Token,
+    UpdateProfile,
+    UserCreate,
+    UserDetail,
+    UserList,
+    UserUpdate,
+)
+from config import settings
 
 user_router = APIRouter(prefix="/user", tags=["auth"])
 

@@ -1,10 +1,9 @@
-from sqlalchemy import String, ForeignKey, Enum
+from sqlalchemy import Enum, ForeignKey, String
 from sqlalchemy.event import listens_for
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-
 from app.utils.db import Base
-from auth.constants import SexEnum, ActivityFactor
+from auth.constants import ActivityFactor, SexEnum
 
 
 class User(Base):

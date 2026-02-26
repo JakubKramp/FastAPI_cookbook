@@ -5,7 +5,8 @@ from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from recipes.models import Ingredient, Dish, IngredientItem
+from recipes.models import Dish, Ingredient, IngredientItem
+
 
 @pytest.mark.asyncio
 async def test_get_ingredient(session: AsyncSession, client: AsyncClient, db_ingredient: Ingredient):

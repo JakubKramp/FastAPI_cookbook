@@ -1,10 +1,10 @@
+from unittest.mock import AsyncMock, patch
+
 import pytest
 import pytest_asyncio
 
-from unittest.mock import AsyncMock, patch
-
 from app.security import get_password_hash
-from auth.models import User, Profile
+from auth.models import Profile, User
 from auth.schemas import DietaryReferenceIntakes
 
 

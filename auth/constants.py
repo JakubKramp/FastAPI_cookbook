@@ -1,6 +1,7 @@
 import enum
 from dataclasses import dataclass
 
+
 class SexEnum(str, enum.Enum):
     MALE = "Male"
     FEMALE = "Female"
