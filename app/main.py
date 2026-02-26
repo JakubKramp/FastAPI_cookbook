@@ -1,5 +1,8 @@
+import asyncio
 from contextlib import asynccontextmanager
 
+from alembic import command
+from alembic.config import Config
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -17,7 +20,8 @@ async def create_db_and_tables() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await create_db_and_tables()
+    alembic_cfg = Config("alembic.ini")
+    await asyncio.get_event_loop().run_in_executor(None, command.upgrade, alembic_cfg, "head")
     yield
 
 app = FastAPI(lifespan=lifespan)
