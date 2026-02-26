@@ -1,8 +1,3 @@
-import asyncio
-from contextlib import asynccontextmanager
-
-from alembic import command
-from alembic.config import Config
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -20,14 +15,8 @@ async def create_db_and_tables() -> None:
         await conn.run_sync(Base.metadata.create_all)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    alembic_cfg = Config("alembic.ini")
-    await asyncio.get_event_loop().run_in_executor(None, command.upgrade, alembic_cfg, "head")
-    yield
+app = FastAPI()
 
-
-app = FastAPI(lifespan=lifespan)
 
 routers = [fridge_router, user_router, ingredient_router]
 

@@ -164,7 +164,6 @@ class DishDetail(ListDish):
 class CreateProduct(BaseModel):
     name: str
     amount: int
-    fridge_id: int
     expires_on: date | None = None
 
     model_config = ConfigDict(json_schema_extra={"example": example_product})

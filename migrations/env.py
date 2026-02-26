@@ -9,7 +9,6 @@ from alembic import context
 
 from app.utils.db import Base
 from config import settings
-import alembic_postgresql_enum
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

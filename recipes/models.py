@@ -77,7 +77,6 @@ class IngredientItem(Base):
 
     dish_id: Mapped[int | None] = mapped_column(ForeignKey("dish.id"))
     dish: Mapped["Dish | None"] = relationship(back_populates="ingredients", lazy="selectin")
-    products: Mapped["Product"] = relationship(back_populates="ingredient", lazy="selectin")
 
 
 class Product(Ingredient):
@@ -92,10 +91,10 @@ class Product(Ingredient):
     id: Mapped[int] = mapped_column(ForeignKey("ingredient.id"), primary_key=True)
     amount: Mapped[int] = mapped_column()
     expires_on: Mapped[date] = mapped_column()
-    marked_for_delete: Mapped[bool] = mapped_column()
+    marked_for_delete: Mapped[bool] = mapped_column(default=False)
     fridge_id: Mapped[int | None] = mapped_column(ForeignKey("fridge.id"))
     fridge: Mapped["Fridge"] = relationship(
-        back_populates="dish",
+        back_populates="products",
         lazy="selectin",
         uselist=True,
     )
