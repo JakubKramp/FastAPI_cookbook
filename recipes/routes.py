@@ -142,7 +142,7 @@ async def dish_list(session: AsyncSession = Depends(get_session)):
 
 @ingredient_router.delete("/dish/{dish_id}", status_code=204)
 async def delete_dish(dish_id: int, session: AsyncSession = Depends(get_session)):
-    dish = session.get(Dish, dish_id)
+    dish = await session.get(Dish, dish_id)
     if not dish:
         raise HTTPException(status_code=404, detail="Dish not found")
     await session.delete(dish)
