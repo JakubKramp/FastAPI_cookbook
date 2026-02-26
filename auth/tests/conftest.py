@@ -27,7 +27,7 @@ async def profile_data() -> dict[str, str | int| bool]:
         "smoking": True,
     }
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def mock_dri_client():
     with patch("auth.routes.DRIClient") as mock:
         instance = mock.return_value
