@@ -1,9 +1,10 @@
-from sqlalchemy import Enum, ForeignKey, String
-from sqlalchemy.event import listens_for
+from sqlalchemy import Enum, ForeignKey, String, event
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.utils.db import Base
 from auth.constants import ActivityFactor, SexEnum
+from fridge.models import Fridge
 
 
 class User(Base):
@@ -12,6 +13,7 @@ class User(Base):
     Relations:
     - Profile (auth) one to one
     """
+
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -20,10 +22,19 @@ class User(Base):
     password: Mapped[str] = mapped_column(String(250))
 
     profile: Mapped["Profile | None"] = relationship(
-     back_populates="user", cascade="all, delete-orphan", uselist=False,
+        back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False,
     )
+
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, name={self.username!r})"
+
+
+@event.listens_for(User, "init")
+def create_fridge(target, args, kwargs):
+    target.fridge = Fridge()
+
 
 class Profile(Base):
     """
@@ -31,13 +42,16 @@ class Profile(Base):
     Relations:
     - User (auth) one to one
     """
+
     __tablename__ = "profile"
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
     # BaseProfile
-    sex: Mapped[SexEnum] = mapped_column(Enum(SexEnum))
-    activity_factor: Mapped[ActivityFactor] = mapped_column(Enum(ActivityFactor))
+    sex: Mapped[SexEnum] = mapped_column(postgresql.ENUM(SexEnum, name="sexenum", create_type=True))
+    activity_factor: Mapped[ActivityFactor] = mapped_column(
+        postgresql.ENUM(ActivityFactor, name="activityfactor", create_type=True)
+    )
     age: Mapped[int] = mapped_column()
     height: Mapped[int] = mapped_column()
     weight: Mapped[int] = mapped_column()
@@ -48,14 +62,10 @@ class Profile(Base):
     carbohydrates: Mapped[float | None] = mapped_column()
     fat: Mapped[float | None] = mapped_column()
     protein: Mapped[float | None] = mapped_column()
-    fiber: Mapped[float| None] = mapped_column()
+    fiber: Mapped[float | None] = mapped_column()
     potassium: Mapped[float | None] = mapped_column()
     sodium: Mapped[float | None] = mapped_column()
 
     # Relationship
     user_id: Mapped[int | None] = mapped_column(ForeignKey("user.id"), default=None)
-    user: Mapped["User | None"] = relationship(
-        back_populates="profile",
-        uselist=False,
-        lazy='selectin'
-    )
+    user: Mapped["User | None"] = relationship(back_populates="profile", uselist=False, lazy="selectin")
