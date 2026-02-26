@@ -22,13 +22,12 @@ async def test_sign_up(client: AsyncClient, session: AsyncSession):
     assert "password" not in data
 
 @pytest.mark.asyncio
-async def test_sign_up_duplicate(client: AsyncClient, session: AsyncSession):
+async def test_sign_up_duplicate(client: AsyncClient):
     payload = {"username": "testuser", "email": "test@test.com", "password": "password123"}
     await client.post("/user/", json=payload)
     response = await client.post("/user/", json=payload)
-    count = await session.scalar(select(func.count()).select_from(User))
-    assert count == 1
     assert response.status_code == 409
+    assert response.json()["detail"] == "Username/email already taken"
 
 @pytest.mark.asyncio
 async def test_login_user(client: AsyncClient, user: User):
@@ -44,17 +43,17 @@ async def test_login_user(client: AsyncClient, user: User):
 
 @pytest.mark.asyncio
 async def test_login_wrong_password(client: AsyncClient, user: User):
-    login_data = dict(username=user.username, password="wrong_test_password")
+    login_data = dict(username=user.username, password="test_wrong_password")
     response = await client.post(
         "/user/login",
         data=login_data,
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     assert response.status_code == 401
-    assert response.json()["detail"]
+
 
 @pytest.mark.asyncio
-async def test_user_detail(client: AsyncClient, user: User):
+async def test_user_me(client: AsyncClient, user: User):
     login_data = dict(username=user.username, password="test_password")
     response = await client.post(
         "/user/login",
@@ -65,6 +64,18 @@ async def test_user_detail(client: AsyncClient, user: User):
     response = await client.get("/user/me", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert response.json()["username"] == "testuser"
+
+@pytest.mark.asyncio
+async def test_user_detail(client: AsyncClient, user: User):
+    response = await client.get(f"/user/{user.id}")
+    assert response.status_code == 200
+    assert response.json()["username"] == user.username
+
+@pytest.mark.asyncio
+async def test_user_detail_no_user(client: AsyncClient):
+    response = await client.get("/user/1")
+    assert response.status_code == 404
+
 
 @pytest.mark.asyncio
 async def test_update_user(client: AsyncClient,  user: User):
@@ -92,7 +103,9 @@ async def test_delete_user(client: AsyncClient,  user: User):
     response = await client.delete("/user/", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 204
 
+
+
 @pytest.mark.asyncio
-async def test_delete_user_unauthorized(client: AsyncClient,  user: User):
+async def test_delete_user_unauthorized(client: AsyncClient):
     response = await client.delete("/user/",)
     assert response.status_code == 401

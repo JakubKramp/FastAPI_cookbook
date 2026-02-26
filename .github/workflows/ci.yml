@@ -36,4 +36,4 @@ jobs:
               echo "Created config/.env"
             fi
       - name: Run tests
-        run: docker compose run api pytest .
+        run: docker compose run api pytest --cov=. --cov-fail-under=90

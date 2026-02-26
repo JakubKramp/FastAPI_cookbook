@@ -8,7 +8,6 @@ from recipes.models import Ingredient
 from recipes.nutritional_data import NutritionalAPIClient
 from recipes.tests.test_data import (
     example_ingredient,
-    example_ingredient_api_response,
     example_create_dish,
 )
 
@@ -24,11 +23,6 @@ async def database_ingredient_fixture(session: AsyncSession) -> Ingredient:
     await session.commit()
     await session.refresh(db_ingredient)
     return db_ingredient
-
-
-
-def get_example_ingredient(*args, **kwargs):
-    return example_ingredient_api_response.copy()[0]
 
 @pytest.fixture(autouse=True)
 def mock_nutri_client():
