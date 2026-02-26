@@ -15,12 +15,12 @@ from app.security import (
     get_password_hash,
     get_current_user,
 )
+from auth.exceptions import credentials_exception
 from auth.schemas import Token, UserDetail, UserCreate, UserUpdate, ProfileDetail, UserList, BaseProfile, UpdateProfile
 from config import settings
 from auth.models import (
     User,
     Profile,
-
 )
 from app.utils.db import get_session
 from auth.dri_scrapper import DRIClient
@@ -44,21 +44,21 @@ async def sign_up(user: UserCreate, session: AsyncSession = Depends(get_session)
     return db_user
 
 
-@user_router.get("/", response_model=UserDetail, status_code=200)
+@user_router.get("/me", response_model=UserDetail, status_code=200)
+async def current_user(user: User = Depends(get_current_user)) -> User:
+    return user
+
+
+@user_router.get("/{user_id}", response_model=UserDetail, status_code=200)
 async def user_detail(user_id: int, session: AsyncSession = Depends(get_session)) -> User:
     user = await session.execute(
         select(User)
         .options(selectinload(User.profile))
         .where(User.id == user_id)
     )
-    user = user.scalar_one()
+    user = user.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return user
-
-
-@user_router.get("/me", response_model=UserDetail, status_code=200)
-async def current_user(user: User = Depends(get_current_user)) -> User:
     return user
 
 
@@ -93,11 +93,7 @@ async def login_for_access_token(
 ):
     user = await authenticate_user(form_data.username, form_data.password, session)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise credentials_exception
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer"}

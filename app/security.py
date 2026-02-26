@@ -60,7 +60,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), session: AsyncSe
     except JWTError:
         raise credentials_exception
     result = await session.scalars(
-        select(User).options(selectinload(User.profile))
+        select(User).where(User.username==username).options(selectinload(User.profile))
     )
     user = result.first()
     return user

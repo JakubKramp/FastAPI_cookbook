@@ -107,17 +107,7 @@ class DRIClient(BaseDRIClient):
             raise ValueError(f"Unrecognized unit: {unit}")
 
 
-    async def extract_data(self, page) -> DietaryReferenceIntakes:
-        table_data = await get_table_data(page)
-        dri_data = {}
-        calories = await page.locator('[data-testid="blockGroups.0.matrices.7.columns.0.0-input"]').input_value()
-        for key, value in table_data.items():
-            if key in self.DRI_names_mapping:
-                dri_data[self.DRI_names_mapping[key]] = await self.process_value(value)
-        dri_data['calories'] = calories.replace('.', '')
-        return DietaryReferenceIntakes(**dri_data)
-
-    async def fill_profile(self, profile: Profile, session: AsyncSession) -> Profile:
+    async def extract_data(self, profile) -> DietaryReferenceIntakes:
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
@@ -125,13 +115,23 @@ class DRIClient(BaseDRIClient):
             await self.accept_cookie_banner(page)
             await self.fill_form(page, profile)
             await asyncio.sleep(1)
-            dri_data = await self.extract_data(page)
+            table_data = await get_table_data(page)
+            dri_data = {}
+            calories = await page.locator('[data-testid="blockGroups.0.matrices.7.columns.0.0-input"]').input_value()
+            for key, value in table_data.items():
+                if key in self.DRI_names_mapping:
+                    dri_data[self.DRI_names_mapping[key]] = await self.process_value(value)
+            dri_data['calories'] = calories.replace('.', '')
+            return DietaryReferenceIntakes(**dri_data)
 
-            for field in ["calories", "carbohydrates", "fat", "protein", "fiber", "potassium", "sodium"]:
-                setattr(profile, field, getattr(dri_data, field))
+    async def fill_profile(self, profile: Profile, session: AsyncSession) -> Profile:
+        dri_data = await self.extract_data(profile)
 
-            session.add(profile)
-            await session.commit()
-            await session.refresh(profile)
+        for field in ["calories", "carbohydrates", "fat", "protein", "fiber", "potassium", "sodium"]:
+            setattr(profile, field, getattr(dri_data, field))
+
+        session.add(profile)
+        await session.commit()
+        await session.refresh(profile)
 
         return profile

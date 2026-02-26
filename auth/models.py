@@ -13,16 +13,13 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(String(50), unique=True)
     username: Mapped[str] = mapped_column(String(50), unique=True)
-    password: Mapped[str] = mapped_column(String(250), unique=True)
+    password: Mapped[str] = mapped_column(String(250))
 
     profile: Mapped["Profile | None"] = relationship(
      back_populates="user", cascade="all, delete-orphan", uselist=False,
     )
     def __repr__(self) -> str:
-        return f"User(id={self.id!r}, name={self.email!r})"
-
-
-
+        return f"User(id={self.id!r}, name={self.username!r})"
 
 class Profile(Base):
     __tablename__ = "profile"
