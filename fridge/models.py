@@ -1,9 +1,13 @@
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.utils.db import Base
+
+if TYPE_CHECKING:
+    from auth.models import User
+    from recipes.models import Product
 
 
 class Fridge(Base):

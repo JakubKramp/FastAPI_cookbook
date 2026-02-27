@@ -35,15 +35,17 @@ async def add_product(
 ):
     result = await session.scalars(select(Fridge).where(Fridge.user_id == user.id))
     fridge = result.first()
-
-    new_product = Product(
-        **product.model_dump(),
-        fridge_id=fridge.id,
-    )
-    session.add(new_product)
-    await session.commit()
-    await session.refresh(new_product)
-    return new_product
+    if fridge:
+        new_product = Product(
+            **product.model_dump(),
+            fridge_id=fridge.id,
+        )
+        session.add(new_product)
+        await session.commit()
+        await session.refresh(new_product)
+        return new_product
+    else:
+        return Response(content="", status_code=404)
 
 
 @fridge_router.get("/expired", response_model=FridgeDetails, status_code=200)
