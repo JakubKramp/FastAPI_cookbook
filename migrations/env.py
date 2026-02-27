@@ -23,6 +23,9 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
+from auth.models import User, Profile
+from recipes.models import Ingredient, IngredientItem, Dish, Product
+from fridge.models import Fridge
 target_metadata = Base.metadata
 
 

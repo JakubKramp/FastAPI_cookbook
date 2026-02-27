@@ -1,0 +1,24 @@
+volumes:
+  pgdata:
+  venv:
+
+services:
+  api:
+    build:
+      context: .
+    depends_on:
+      - postgres
+    volumes:
+      - venv:/app/.venv  # preserve the venv from the image
+
+    ports:
+      - '8000:8000'
+
+  postgres:
+    image: 'postgres:18.2'
+    env_file:
+      - config/.env
+    ports:
+          - "5431:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql

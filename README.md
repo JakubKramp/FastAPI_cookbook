@@ -65,3 +65,9 @@ Running:
 docker-compose exec api alembic upgrade head          
 Reverting:
 docker-compose exec api alembic downgrade -1 
+
+Custom scripts:
+The app provides custom CLI twith following commands:
+- Startapp
+Creates new module with some basic files
+Usage: python -m core.cli startapp {app_name}

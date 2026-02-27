@@ -1,8 +1,9 @@
+from datetime import date
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, computed_field
 
-from recipes.tests.test_data import example_ingredient
+from recipes.tests.test_data.example_data import example_ingredient, example_product
 
 
 class NutritionalValues(BaseModel):
@@ -68,7 +69,6 @@ class UpdateIngredient(CreateIngredient):
     fat_saturated: Optional[float] | None = None
     sodium: Optional[float] | None = None
     potassium: Optional[float] | None = None
-    cholesterol: Optional[float] | None = None
     fiber: Optional[float] | None = None
     sugar: Optional[float] | None = None
 
@@ -158,3 +158,11 @@ class DishDetail(ListDish):
                 },
             }
         }
+
+
+class CreateProduct(BaseModel):
+    name: str
+    amount: int
+    expires_on: date | None = None
+
+    model_config = ConfigDict(from_attributes=True, json_schema_extra={"example": example_product})
