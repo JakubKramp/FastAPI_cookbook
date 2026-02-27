@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List
 
-from sqlalchemy import ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import ForeignKey, String, Text, UniqueConstraint, select
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.utils.db import Base
@@ -101,3 +101,7 @@ class Product(Ingredient):
 
     def is_expired(self) -> bool:
         return self.expires_on < date.today()
+
+    @classmethod
+    def expired(cls):
+        return cls.marked_for_delete == True

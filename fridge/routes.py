@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import contains_eager, selectinload
+from starlette.responses import Response
 
 from app.security import get_current_user
 from app.utils.db import get_session
@@ -45,11 +46,30 @@ async def add_product(
     return new_product
 
 
-@fridge_router.get("expired")
-async def get_expired_products():
-    pass
+@fridge_router.get("/expired", response_model=FridgeDetails, status_code=200)
+async def get_expired_products(
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    query = (
+        select(Fridge)
+        .where(Fridge.user_id == user.id)
+        .join(Fridge.products)
+        .where(Product.expired().whereclause)
+        .options(contains_eager(Fridge.products))
+    )
+    result = await session.scalars(query)
+    expired_products = result.first()
+    return expired_products
 
 
-@fridge_router.delete("expired")
-async def delete_expired_products():
-    pass
+@fridge_router.delete("/expired")
+async def delete_expired_products(
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    fridge_id = await session.scalar(select(Fridge.id).where(Fridge.user_id == user.id))
+
+    await session.execute(delete(Product).where(Product.fridge_id == fridge_id).where(Product.expired()))
+    await session.commit()
+    return Response(content="", status_code=204)
