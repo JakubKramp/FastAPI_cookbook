@@ -31,9 +31,7 @@ jobs:
         run: docker compose build
       - name: Setup environment file
         run: |
-            if [ ! -f config/.env ]; then
               cp config/env.example config/.env
               echo "Created config/.env"
-            fi
       - name: Run tests
         run: docker compose -f docker-compose-ci.yml run api pytest --cov=. --cov-fail-under=90
