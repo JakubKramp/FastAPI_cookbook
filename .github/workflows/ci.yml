@@ -27,11 +27,11 @@ jobs:
     needs: [ruff-lint, type-check]
     steps:
       - uses: actions/checkout@v6
-      - name: Build the image
-        run: docker compose build
       - name: Setup environment file
         run: |
               cp config/env.example config/.env
               echo "Created config/.env"
+      - name: Build the image
+        run: docker compose build
       - name: Run tests
         run: docker compose -f docker-compose-ci.yml run api pytest --cov=. --cov-fail-under=90
