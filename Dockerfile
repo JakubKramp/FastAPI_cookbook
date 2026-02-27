@@ -14,6 +14,5 @@ COPY . .
 ARG INSTALL_PLAYWRIGHT=false
 RUN if [ "$INSTALL_PLAYWRIGHT" = "true" ]; then playwright install chromium && playwright install-deps chromium; fi
 RUN sed -i 's/\r//' entrypoint.sh && chmod +x entrypoint.sh
-RUN ls -la
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
