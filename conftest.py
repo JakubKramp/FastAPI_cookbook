@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.main import app
 from app.utils.db import Base, get_session
+from auth.tests.conftest import *
 from config import settings
 
 
@@ -35,10 +36,10 @@ async def database_setup(engine):
         await conn.run_sync(Base.metadata.drop_all)
 
 
-
 @pytest_asyncio.fixture(name="client")
 async def client_fixture(engine):
     async with AsyncSession(engine) as session:
+
         async def get_session_override():
             yield session
 
@@ -53,6 +54,7 @@ async def client_fixture(engine):
         await session.commit()
 
     app.dependency_overrides.clear()
+
 
 @pytest_asyncio.fixture(name="session")
 async def session_fixture(engine):

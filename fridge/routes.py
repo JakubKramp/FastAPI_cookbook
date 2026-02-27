@@ -36,7 +36,8 @@ async def add_product(
     result = await session.scalars(select(Fridge).where(Fridge.user_id == user.id))
     fridge = result.first()
     if fridge:
-        new_product = Product(
+        new_product = await Product.create(
+            session,
             **product.model_dump(),
             fridge_id=fridge.id,
         )
@@ -57,7 +58,7 @@ async def get_expired_products(
         select(Fridge)
         .where(Fridge.user_id == user.id)
         .join(Fridge.products)
-        .where(Product.expired().whereclause)
+        .where(Product.expired())
         .options(contains_eager(Fridge.products))
     )
     result = await session.scalars(query)

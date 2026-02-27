@@ -1,7 +1,15 @@
+from datetime import date
+
 example_product = {
     "name": "carrot",
     "amount": 100,
     "expires_on": "2026-12-31",
+    "fridge_id": 1,
+}
+example_db_product = {
+    "name": "carrot",
+    "amount": 100,
+    "expires_on": date(year=2020, month=12, day=12),
     "fridge_id": 1,
 }
 example_fridge = {"products": [example_product]}
@@ -13,7 +21,6 @@ example_ingredient = {
     "protein": 0.8,
     "sodium": 57.0,
     "potassium": 30.0,
-    "cholesterol": 0.0,
     "carbohydrates_total": 8.3,
     "fiber": 3.0,
     "sugar": 3.4,
@@ -26,7 +33,6 @@ example_ingredient_api_response = [
         "protein_g": 0.8,
         "sodium_mg": 57,
         "potassium_mg": 30,
-        "cholesterol_mg": 0,
         "carbohydrates_total_g": 8.3,
         "fiber_g": 3,
         "sugar_g": 3.4,

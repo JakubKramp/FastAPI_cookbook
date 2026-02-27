@@ -2,6 +2,7 @@ from datetime import date
 from typing import List
 
 from sqlalchemy import ForeignKey, String, Text, UniqueConstraint, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.utils.db import Base
@@ -27,7 +28,6 @@ class Ingredient(Base):
     protein: Mapped[float] = mapped_column(default=0.0)
     sodium: Mapped[float] = mapped_column(default=0.0)
     potassium: Mapped[float] = mapped_column(default=0.0)
-    cholesterol: Mapped[float] = mapped_column(default=0.0)
     carbohydrates_total: Mapped[float] = mapped_column(default=0.0)
     fiber: Mapped[float] = mapped_column(default=0.0)
     sugar: Mapped[float] = mapped_column(default=0.0)
@@ -79,7 +79,7 @@ class IngredientItem(Base):
     dish: Mapped["Dish | None"] = relationship(back_populates="ingredients", lazy="selectin")
 
 
-class Product(Ingredient):
+class Product(Base):
     """
     Item with an amount and expiry date.
     Relations:
@@ -88,7 +88,9 @@ class Product(Ingredient):
     """
 
     __tablename__ = "product"
-    id: Mapped[int] = mapped_column(ForeignKey("ingredient.id"), primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ingredient_id: Mapped[int] = mapped_column(ForeignKey("ingredient.id"))
+    ingredient: Mapped["Ingredient"] = relationship(lazy="selectin")
     amount: Mapped[int] = mapped_column()
     expires_on: Mapped[date] = mapped_column()
     marked_for_delete: Mapped[bool] = mapped_column(default=False)
@@ -99,9 +101,31 @@ class Product(Ingredient):
         uselist=True,
     )
 
+    @property
+    def name(self) -> str:
+        return self.ingredient.name
+
+    @name.setter
+    def name(self, value: str) -> None:
+        pass  # name is set via ingredient, ignore
+
     def is_expired(self) -> bool:
         return self.expires_on < date.today()
 
     @classmethod
     def expired(cls):
         return cls.marked_for_delete == True
+
+    @classmethod
+    async def create(cls, session: AsyncSession, **kwargs) -> "Product":
+        name = kwargs.pop("name")
+        ingredient = await session.scalar(select(Ingredient).where(Ingredient.name == name))
+        if not ingredient:
+            ingredient = Ingredient(name=name)
+            session.add(ingredient)
+            await session.flush()
+        await session.refresh(ingredient)
+        product = cls(**kwargs, ingredient=ingredient)
+        session.add(product)
+        await session.flush()
+        return product

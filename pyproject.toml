@@ -25,6 +25,7 @@ dependencies = [
     "pytest-cov>=7.0.0",
     "typer>=0.24.1",
     "alembic-postgresql-enum>=1.10.0",
+    "faker>=40.5.1",
 ]
 
 
