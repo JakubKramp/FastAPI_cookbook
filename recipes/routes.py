@@ -1,4 +1,6 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse, Response
@@ -8,12 +10,15 @@ from recipes.models import (
     Dish,
     Ingredient,
     IngredientItem,
+    Tag,
 )
 from recipes.nutritional_data import NutritionalAPIClient
 from recipes.schemas import (
     CreateDish,
     CreateIngredient,
+    CreateTag,
     DishDetail,
+    DishFilterParams,
     ListDish,
     ListIngredient,
     NutritionalValues,
@@ -58,14 +63,12 @@ async def ingredient_list(session: AsyncSession = Depends(get_session)):
     return ingredients
 
 
-
 @ingredient_router.patch("/{ingredient_id}", response_model=ListIngredient, status_code=200)
 async def update_ingredient(
     ingredient_id: int,
     ingredient_data: UpdateIngredient,
     session: AsyncSession = Depends(get_session),
 ):
-
     ingredient = await session.get(Ingredient, ingredient_id)
     if not ingredient:
         raise HTTPException(status_code=404, detail="Ingredient not found")
@@ -85,7 +88,7 @@ async def delete_ingredient(ingredient_id: int, session: AsyncSession = Depends(
         raise HTTPException(status_code=404, detail="Ingredient not found")
     await session.delete(ingredient)
     await session.commit()
-    return Response(content='', status_code=204)
+    return Response(content="", status_code=204)
 
 
 @ingredient_router.post(
@@ -104,15 +107,13 @@ async def create_dish(dish_data: CreateDish, session: AsyncSession = Depends(get
     await session.flush()
 
     existing = await session.scalars(
-        select(Ingredient).where(Ingredient.name.in_([i['name'] for i in ingredients]))
+        select(Ingredient).where(Ingredient.name.in_([i["name"] for i in ingredients]))
     )
     existing_ingredients = {i.name: i for i in existing.all()}
 
     # bulk create missing ingredients
     new_ingredients = [
-        Ingredient(name=i['name'])
-        for i in ingredients
-        if i['name'] not in existing_ingredients
+        Ingredient(name=i["name"]) for i in ingredients if i["name"] not in existing_ingredients
     ]
     if new_ingredients:
         session.add_all(new_ingredients)
@@ -120,22 +121,31 @@ async def create_dish(dish_data: CreateDish, session: AsyncSession = Depends(get
         existing_ingredients.update({i.name: i for i in new_ingredients})
 
     # bulk create ingredient items
-    session.add_all([
-        IngredientItem(
-            dish_id=dish.id,
-            ingredient_id=existing_ingredients[i['name']].id,
-            amount=i['amount']
-        )
-        for i in ingredients
-    ])
+    session.add_all(
+        [
+            IngredientItem(
+                dish_id=dish.id, ingredient_id=existing_ingredients[i["name"]].id, amount=i["amount"]
+            )
+            for i in ingredients
+        ]
+    )
 
     await session.commit()
     await session.refresh(dish)
     return dish
 
+
 @ingredient_router.get("/dish/", response_model=list[ListDish], status_code=200)
-async def dish_list(session: AsyncSession = Depends(get_session)):
-    result = await session.scalars(select(Dish))
+async def dish_list(
+    filter_params: Annotated[DishFilterParams, Query()], session: AsyncSession = Depends(get_session)
+):
+    filters = []
+    if filter_params.tag_id:
+        filters.append(Dish.tags.any(Tag.id.in_(filter_params.tag_id)))
+    if filter_params.tag_name:
+        filters.append(Dish.tags.any(Tag.name.in_(filter_params.tag_name)))
+
+    result = await session.scalars(select(Dish).where(*filters))
     dishes = result.all()
     return dishes
 
@@ -174,3 +184,25 @@ async def dish_detail(dish_id: int, session: AsyncSession = Depends(get_session)
         **dish.__dict__,
         "nutritional_values": dict(zip(nut_values, nut_row)) if nut_row else None,
     }
+
+
+@ingredient_router.post("/dish/{dish_id}/tag", response_model=DishDetail, status_code=200)
+async def dish_add_tag(dish_id: int, tag_data: CreateTag, session: AsyncSession = Depends(get_session)):
+    dish = await session.get(Dish, dish_id)
+    if not dish:
+        raise HTTPException(status_code=404, detail="Dish not found")
+
+    result = await session.scalars(select(Tag).where(Tag.name == tag_data.name))
+    tag = result.first()
+
+    if not tag:
+        tag = Tag(**tag_data.model_dump())
+        session.add(tag)
+        await session.flush()
+
+    if tag not in dish.tags:
+        dish.tags.append(tag)
+
+    await session.commit()
+    await session.refresh(dish)
+    return dish
