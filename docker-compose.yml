@@ -23,3 +23,34 @@ services:
           - "5431:5432"
     volumes:
       - pgdata:/var/lib/postgresql
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  celery-beat:
+    build:
+      context: .
+    command: celery -A app.celery_app beat --loglevel=info
+    depends_on:
+      - redis
+      - postgres
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    env_file:
+      - config/.env
+
+  celery-worker:
+    build:
+      context: .
+    command: celery -A app.celery_app worker --loglevel=info
+    depends_on:
+      - redis
+      - postgres
+    volumes:
+      - .:/app
+      - venv:/app/.venv
+    env_file:
+      - config/.env
