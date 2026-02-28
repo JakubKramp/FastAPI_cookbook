@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import contains_eager, selectinload
 from starlette.responses import Response
@@ -9,7 +9,7 @@ from app.utils.db import get_session
 from auth.models import User
 from fridge.models import Fridge
 from fridge.schemas import FridgeDetails
-from recipes.models import Product
+from recipes.models import Ingredient, Product
 from recipes.schemas import CreateProduct
 
 fridge_router = APIRouter(prefix="/fridge", tags=["fridge"])
@@ -17,6 +17,7 @@ fridge_router = APIRouter(prefix="/fridge", tags=["fridge"])
 
 @fridge_router.get("/", response_model=FridgeDetails, status_code=200)
 async def get_fridge(
+    totals: bool = False,
     session: AsyncSession = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
@@ -24,6 +25,16 @@ async def get_fridge(
         select(Fridge).where(Fridge.user_id == user.id).options(selectinload(Fridge.products))
     )
     fridge = result.first()
+    if totals:
+        result = await session.execute(
+            select(Ingredient.name, func.sum(Product.amount))
+            .join(Ingredient, Product.ingredient_id == Ingredient.id)
+            .join(Fridge, Product.fridge_id == Fridge.id)
+            .where(Fridge.user_id == user.id)
+            .group_by(Ingredient.name)
+        )
+        rows = result.all()
+        return FridgeDetails(products=[CreateProduct(name=product[0], amount=product[1]) for product in rows])
     return fridge
 
 

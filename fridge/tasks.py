@@ -17,7 +17,6 @@ async_session = async_sessionmaker(engine, expire_on_commit=False)
 @celery_app.task
 def mark_expired_products():
     async def _run():
-        print("XDDD")
         engine = create_async_engine(settings.DATABASE_URL)
         async_session = async_sessionmaker(engine, expire_on_commit=False)
 

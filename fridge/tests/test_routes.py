@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.models import User
 from recipes.models import Product
-from recipes.tests.test_data.example_data import example_product
+from recipes.tests.test_data.example_data import example_db_product, example_product
 
 
 @pytest.mark.asyncio
@@ -18,6 +18,27 @@ async def test_get_fridge(user: User, client: AsyncClient, session: AsyncSession
     )
     token = response.json()["access_token"]
     response = await client.get(f"/fridge/", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_get_fridge_totals(user: User, client: AsyncClient, session: AsyncSession):
+    login_data = dict(username=user.username, password="test_password")
+    response = await client.post(
+        "/user/login",
+        data=login_data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    product = await Product.create(session, **example_db_product, marked_for_delete=False)
+    product1 = await Product.create(session, **example_db_product, marked_for_delete=False)
+    session.add(product)
+    session.add(product1)
+    await session.commit()
+    token = response.json()["access_token"]
+    response = await client.get(f"/fridge/?totals=true", headers={"Authorization": f"Bearer {token}"})
+    count = await session.scalar(select(func.count()).select_from(Product))
+    assert count == 2
+    assert len(response.json()["products"]) == 1
     assert response.status_code == 200
 
 
