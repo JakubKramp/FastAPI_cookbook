@@ -1,9 +1,10 @@
 from datetime import date
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
-from recipes.tests.test_data.example_data import example_ingredient, example_product
+from recipes.models import Tag
+from recipes.tests.test_data.example_data import example_ingredient, example_product, example_tag
 
 
 class NutritionalValues(BaseModel):
@@ -137,8 +138,22 @@ class ListDish(BaseModel):
         }
 
 
+class CreateTag(BaseModel):
+    name: str
+
+    model_config = ConfigDict(from_attributes=True, json_schema_extra={"example": {"name": "French kitchen"}})
+
+
+class TagSchema(BaseModel):
+    id: int
+    name: str
+
+    model_config = ConfigDict(from_attributes=True, json_schema_extra={"example": example_tag})
+
+
 class DishDetail(ListDish):
     nutritional_values: NutritionalValues | None = None
+    tags: List[TagSchema] = []
 
     class Config:
         json_schema_extra = {
@@ -166,3 +181,8 @@ class CreateProduct(BaseModel):
     expires_on: date | None = None
 
     model_config = ConfigDict(from_attributes=True, json_schema_extra={"example": example_product})
+
+
+class DishFilterParams(BaseModel):
+    tag_name: List[str] = []
+    tag_id: List[int] = []

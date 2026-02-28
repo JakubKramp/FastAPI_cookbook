@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List
 
-from sqlalchemy import ForeignKey, String, Text, UniqueConstraint, select
+from sqlalchemy import Column, ForeignKey, String, Table, Text, UniqueConstraint, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -41,6 +41,14 @@ class Ingredient(Base):
         return f"Ingredient {self.name} with an ID of {self.id}"
 
 
+dish_tag = Table(
+    "dish_tag",
+    Base.metadata,
+    Column("dish_id", ForeignKey("dish.id"), primary_key=True),
+    Column("tag_id", ForeignKey("tag.id"), primary_key=True),
+)
+
+
 class Dish(Base):
     """
     Model that represents a recipe
@@ -55,6 +63,7 @@ class Dish(Base):
     recipe: Mapped[str | None] = mapped_column(Text)
 
     ingredients: Mapped[List["IngredientItem"]] = relationship(back_populates="dish", lazy="selectin")
+    tags: Mapped[list["Tag"]] = relationship(secondary=dish_tag, back_populates="dish", lazy="selectin")
 
 
 class IngredientItem(Base):
@@ -129,3 +138,10 @@ class Product(Base):
         session.add(product)
         await session.flush()
         return product
+
+
+class Tag(Base):
+    __tablename__ = "tag"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(unique=True)
+    dish: Mapped[List["Dish"]] = relationship(secondary=dish_tag, back_populates="tags", lazy="selectin")

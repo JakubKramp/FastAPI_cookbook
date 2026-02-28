@@ -53,3 +53,7 @@ example_create_dish = {
         "sugar": 10.36,
     },
 }
+example_tag = {
+    "id": 1,
+    "name": "French kitchen",
+}
