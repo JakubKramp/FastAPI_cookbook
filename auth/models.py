@@ -1,6 +1,6 @@
 from sqlalchemy import Enum, ForeignKey, String, event
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.utils.db import Base
 from auth.constants import ActivityFactor, SexEnum
@@ -12,6 +12,7 @@ class User(Base):
     Table representing a user.
     Relations:
     - Profile (auth) one to one
+    - Fridge (fridge) one to one
     """
 
     __tablename__ = "user"
@@ -32,12 +33,21 @@ class User(Base):
         uselist=False,
     )
 
+    @validates("email")
+    def validate_email(self, key, address):
+        if "@" not in address:
+            raise ValueError("Please enter a valid email address")
+        return address
+
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, name={self.username!r})"
 
 
 @event.listens_for(User, "init")
 def create_fridge(target, args, kwargs):
+    """
+    Automatically creates an empty fridge when an user is created
+    """
     target.fridge = Fridge()
 
 

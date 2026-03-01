@@ -3,7 +3,7 @@ from typing import List
 
 from sqlalchemy import Column, ForeignKey, String, Table, Text, UniqueConstraint, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.utils.db import Base
 
@@ -37,6 +37,22 @@ class Ingredient(Base):
         back_populates="ingredient", lazy="selectin"
     )
 
+    @validates(
+        "calories",
+        "fat_total",
+        "fat_saturated",
+        "protein",
+        "sodium",
+        "potassium",
+        "carbohydrates_total",
+        "fiber",
+        "sugar",
+    )
+    def validate_email(self, key, value):
+        if value < 0:
+            raise ValueError(f"{key} can not be less than 0")
+        return value
+
     def __repr__(self):
         return f"Ingredient {self.name} with an ID of {self.id}"
 
@@ -54,6 +70,7 @@ class Dish(Base):
     Model that represents a recipe
     Relations:
     - IngredientItem(recipes) one to many
+    - Tag(recipes) many to many, through dish_tag
     """
 
     __tablename__ = "dish"
@@ -141,6 +158,11 @@ class Product(Base):
 
 
 class Tag(Base):
+    """
+    Tags a dish with a specific characteristic.
+    - Dish(recipes) many to many, through dish_tag
+    """
+
     __tablename__ = "tag"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(unique=True)

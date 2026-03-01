@@ -12,5 +12,6 @@ async def get_session() -> AsyncGeneratorType:
     async with AsyncSession(engine) as session:
         yield session
 
+
 class Base(DeclarativeBase):
     pass

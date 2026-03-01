@@ -1,9 +1,8 @@
 from datetime import date
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict
 
-from recipes.models import Tag
 from recipes.tests.test_data.example_data import example_ingredient, example_product, example_tag
 
 
