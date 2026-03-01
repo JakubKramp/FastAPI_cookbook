@@ -92,24 +92,9 @@ async def test_dish_detail_does_not_exist(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_dish_add_tag(client: AsyncClient):
-    response = await client.get("/ingredients/dish/1/")
-    assert response.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_dish_add_tag_to_many(client: AsyncClient):
-    response = await client.get("/ingredients/dish/1")
-    assert response.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_dish_filter_by_tag_name(client: AsyncClient):
-    response = await client.get("/ingredients/dish/1")
-    assert response.status_code == 404
-
-
-@pytest.mark.asyncio
-async def test_dish_filter_by_tag_id(client: AsyncClient):
-    response = await client.get("/ingredients/dish/1")
-    assert response.status_code == 404
+async def test_dish_add_tag(session: AsyncSession, client: AsyncClient, create_dish: dict, tag: dict):
+    await client.post("/ingredients/dish/", json=create_dish)
+    response = await client.post("/ingredients/dish/1/tag", json=tag)
+    ingredient_item_count = await session.scalar(select(func.count(IngredientItem.id)))
+    assert response.json()["tags"][0]["name"] == tag["name"]
+    assert response.status_code == 200

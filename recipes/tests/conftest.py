@@ -9,6 +9,7 @@ from recipes.nutritional_data import NutritionalAPIClient
 from recipes.tests.test_data.example_data import (
     example_create_dish,
     example_ingredient,
+    example_tag,
 )
 
 
@@ -36,3 +37,8 @@ def mock_nutri_client():
 @pytest.fixture(name="create_dish")
 def create_dish_fixture():
     return example_create_dish
+
+
+@pytest.fixture(name="tag")
+def create_tag_fixture():
+    return example_tag
