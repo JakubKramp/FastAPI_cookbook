@@ -1,5 +1,3 @@
-from datetime import date
-
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 

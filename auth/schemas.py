@@ -1,19 +1,20 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from auth.constants import SexEnum
+from auth.tests.example_data.example_users import (
+    example_base_profile,
+    example_profile,
+    example_user_create,
+    example_user_list,
+)
 
 
 class UserList(BaseModel):
+    id: int
     email: str
     username: str
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "email": "jeff.spicoli@labeouf.com",
-                "username": "jeffS",
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={"example": example_user_list})
 
 
 class UserUpdate(BaseModel):
@@ -25,27 +26,15 @@ class UserUpdate(BaseModel):
     username: str | None = None
     password: str | None = None
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "email": "jeff.spicoli@labeouf.com",
-                "password": "hewillnotdivideus",
-                "username": "jeffS",
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={"example": example_user_create})
 
 
-class UserCreate(UserList):
-    password: str | None
+class UserCreate(BaseModel):
+    password: str
+    email: str
+    username: str
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "email": "jeff.spicoli@labeouf.com",
-                "password": "hewillnotdivideus",
-                "username": "jeffS",
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={"example": example_user_create})
 
 
 class UpdateProfile(BaseModel):
@@ -65,17 +54,7 @@ class BaseProfile(BaseModel):
     weight: int
     smoking: bool
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "sex": "Male",
-                "age": 30,
-                "height": 180,
-                "weight": 80,
-                "activity_factor": "Little/no exercise",
-                "smoking": True,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={"example": example_base_profile})
 
 
 class DietaryReferenceIntakes(BaseModel):
@@ -97,24 +76,7 @@ class ProfileDetail(BaseProfile):
     potassium: float | None = None
     sodium: float | None = None
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "sex": "Male",
-                "age": 30,
-                "height": 180,
-                "weight": 80,
-                "activity_factor": "Little/no exercise",
-                "smoking": True,
-                "calories": 4000,
-                "carbohydrates": 4000,
-                "fat": 4000,
-                "protein": 4000,
-                "fiber": 4000,
-                "potassium": 4000,
-                "sodium": 4000,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={"example": example_profile})
 
 
 class UserDetail(UserList):

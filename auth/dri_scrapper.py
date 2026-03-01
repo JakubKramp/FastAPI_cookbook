@@ -14,8 +14,15 @@ class BaseDRIClient:
     DRI_names_mapping = {}
     setter_functions = []
 
+    def __init__(self):
+        self.setter_functions = [
+            method
+            for name, method in inspect.getmembers(self, predicate=inspect.ismethod)
+            if name.startswith("set_")
+        ]
+
     @staticmethod
-    def get_age(age: int) -> str| None:
+    def get_age(age: int) -> str | None:
         age_label = next((r for r in RANGES if age in r), None)
         if age_label:
             return age_label.label
@@ -33,60 +40,35 @@ class BaseDRIClient:
     def get_dri_data(self):
         raise NotImplementedError
 
-
-async def get_table_data(page) -> dict[str, str]:
-    tables = await page.locator('table').all()
-    data = {}
-    for table in tables:
-        rows = await table.locator('tr').all()
-        for row in rows[1:]:  # skip header
-            cells = await row.locator('td p').all_inner_texts()
-            if len(cells) == 2:
-                data[cells[0]] = cells[1]
-    return data
-
-
-class DRIClient(BaseDRIClient):
-    base_url = "https://www.omnicalculator.com/health/dri"
-    DRI_names_mapping = {
-        "Carbohydrates": "carbohydrates",
-        "Fat": "fat",
-        "Protein": "protein",
-        "Sodium": "sodium",
-        "Potassium": "potassium",
-        "Total fiber": "fiber",
-    }
-    def __init__(self):
-        self.setter_functions = [
-            method for name, method in inspect.getmembers(self, predicate=inspect.ismethod)
-            if name.startswith("set_")
-        ]
+    @staticmethod
+    async def get_table_data(page) -> dict[str, str]:
+        tables = await page.locator("table").all()
+        data = {}
+        for table in tables:
+            rows = await table.locator("tr").all()
+            for row in rows[1:]:  # skip header
+                cells = await row.locator("td p").all_inner_texts()
+                if len(cells) == 2:
+                    data[cells[0]] = cells[1]
+        return data
 
     async def set_height(self, page, profile) -> None:
-        height_input = page.locator('[data-cwv-id="calculator-block_variable-numerical-input_native"]').nth(0)
-        await height_input.click()
-        await height_input.fill(str(profile.height))
+        raise NotImplementedError
 
     async def set_weight(self, page, profile) -> None:
-        weight_input = page.locator('[data-testid="blockGroups.0.matrices.4.columns.0.0-input"]')
-        await weight_input.click()
-        await weight_input.fill(str(profile.weight))
+        raise NotImplementedError
 
-    async def set_activity(self, page,  profile) -> None:
-        activity_select = page.locator('[id="blockGroups.0.matrices.6.columns.0.0-input"]')
-        await activity_select.select_option(label=profile.activity_factor)
+    async def set_activity(self, page, profile) -> None:
+        raise NotImplementedError
 
     async def set_smoking(self, page, profile) -> None:
-        if profile.smoking:
-            await page.locator('input[value="EF0hpa8mMsL4Ba0MSPGWM"]').click()
+        raise NotImplementedError
 
     async def set_age(self, page, profile) -> None:
-        age_select = page.locator('[id="blockGroups.0.matrices.2.columns.0.0-input"]')
-        await age_select.select_option(label=self.get_age(profile.age))
+        raise NotImplementedError
 
     async def set_sex(self, page, profile):
-        sex_radiogroup = page.locator('[role="radiogroup"][data-cwv-id="calculator-block_variable-value_select-radio"]')
-        await sex_radiogroup.get_by_role("radio", name=profile.sex, exact=True).check()
+        raise NotImplementedError
 
     async def fill_form(self, page, profile) -> None:
         for setter in self.setter_functions:
@@ -95,33 +77,18 @@ class DRIClient(BaseDRIClient):
     @staticmethod
     async def process_value(value: str) -> float:
         value, unit = value.strip().split(" ")
-        if unit == 'grams':
-            if '-' in value:
-                minimum, maximum = map(int, value.split('-'))
-                return (minimum + maximum)/2
+        if unit == "grams":
+            if "-" in value:
+                minimum, maximum = map(int, value.split("-"))
+                return (minimum + maximum) / 2
             return float(value)
-        elif unit == 'mg':
-            return float(value)/1000
+        elif unit == "mg":
+            return float(value) / 1000
         else:
             raise ValueError(f"Unrecognized unit: {unit}")
 
-
     async def extract_data(self, profile) -> DietaryReferenceIntakes:
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            page = await browser.new_page()
-            await page.goto(self.base_url)
-            await self.accept_cookie_banner(page)
-            await self.fill_form(page, profile)
-            await asyncio.sleep(1)
-            table_data = await get_table_data(page)
-            dri_data = {}
-            calories = await page.locator('[data-testid="blockGroups.0.matrices.7.columns.0.0-input"]').input_value()
-            for key, value in table_data.items():
-                if key in self.DRI_names_mapping:
-                    dri_data[self.DRI_names_mapping[key]] = await self.process_value(value)
-            dri_data['calories'] = calories.replace('.', '')
-            return DietaryReferenceIntakes(**dri_data)
+        raise NotImplementedError
 
     async def fill_profile(self, profile: Profile, session: AsyncSession) -> Profile:
         dri_data = await self.extract_data(profile)
@@ -134,3 +101,62 @@ class DRIClient(BaseDRIClient):
         await session.refresh(profile)
 
         return profile
+
+
+class DRIClient(BaseDRIClient):
+    base_url = "https://www.omnicalculator.com/health/dri"
+    DRI_names_mapping = {
+        "Carbohydrates": "carbohydrates",
+        "Fat": "fat",
+        "Protein": "protein",
+        "Sodium": "sodium",
+        "Potassium": "potassium",
+        "Total fiber": "fiber",
+    }
+
+    async def set_height(self, page, profile) -> None:
+        height_input = page.locator('[data-cwv-id="calculator-block_variable-numerical-input_native"]').nth(0)
+        await height_input.click()
+        await height_input.fill(str(profile.height))
+
+    async def set_weight(self, page, profile) -> None:
+        weight_input = page.locator('[data-testid="blockGroups.0.matrices.4.columns.0.0-input"]')
+        await weight_input.click()
+        await weight_input.fill(str(profile.weight))
+
+    async def set_activity(self, page, profile) -> None:
+        activity_select = page.locator('[id="blockGroups.0.matrices.6.columns.0.0-input"]')
+        await activity_select.select_option(label=profile.activity_factor)
+
+    async def set_smoking(self, page, profile) -> None:
+        if profile.smoking:
+            await page.locator('input[value="EF0hpa8mMsL4Ba0MSPGWM"]').click()
+
+    async def set_age(self, page, profile) -> None:
+        age_select = page.locator('[id="blockGroups.0.matrices.2.columns.0.0-input"]')
+        await age_select.select_option(label=self.get_age(profile.age))
+
+    async def set_sex(self, page, profile):
+        sex_radiogroup = page.locator(
+            '[role="radiogroup"][data-cwv-id="calculator-block_variable-value_select-radio"]'
+        )
+        await sex_radiogroup.get_by_role("radio", name=profile.sex, exact=True).check()
+
+    async def extract_data(self, profile) -> DietaryReferenceIntakes:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            page = await browser.new_page()
+            await page.goto(self.base_url)
+            await self.accept_cookie_banner(page)
+            await self.fill_form(page, profile)
+            await asyncio.sleep(1)
+            table_data = await self.get_table_data(page)
+            dri_data = {}
+            calories = await page.locator(
+                '[data-testid="blockGroups.0.matrices.7.columns.0.0-input"]'
+            ).input_value()
+            for key, value in table_data.items():
+                if key in self.DRI_names_mapping:
+                    dri_data[self.DRI_names_mapping[key]] = await self.process_value(value)
+            dri_data["calories"] = calories.replace(".", "")
+            return DietaryReferenceIntakes(**dri_data)
