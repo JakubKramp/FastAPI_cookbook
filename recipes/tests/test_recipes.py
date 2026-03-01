@@ -21,8 +21,11 @@ async def test_get_ingredient_does_not_exist(client: AsyncClient):
     response = await client.get("/ingredients/1")
     assert response.status_code == 404
 
+
 @pytest.mark.asyncio
-async def test_list_ingredients(session: AsyncSession, client: AsyncClient, db_ingredient: Ingredient, mock_nutri_client: AsyncMock):
+async def test_list_ingredients(
+    session: AsyncSession, client: AsyncClient, db_ingredient: Ingredient, mock_nutri_client: AsyncMock
+):
     db_ingredient1 = Ingredient(name="broccoli")
     session.add(db_ingredient1)
     await session.commit()
@@ -37,10 +40,12 @@ async def test_delete_ingredient(client: AsyncClient, db_ingredient: Ingredient)
     response = await client.delete("/ingredients/1")
     assert response.status_code == 204
 
+
 @pytest.mark.asyncio
 async def test_delete_ingredient_does_not_exist(client: AsyncClient):
     response = await client.delete("/ingredients/1")
     assert response.status_code == 404
+
 
 @pytest.mark.asyncio
 async def test_create_dish(session: AsyncSession, client: AsyncClient, create_dish: dict):
@@ -48,7 +53,7 @@ async def test_create_dish(session: AsyncSession, client: AsyncClient, create_di
     dish_count = await session.scalar(select(func.count(Dish.id)))
     assert dish_count == 1
     ingredient_item_count = await session.scalar(select(func.count(IngredientItem.id)))
-    assert ingredient_item_count  == 2
+    assert ingredient_item_count == 2
     assert response.status_code == 201
 
 
@@ -59,11 +64,13 @@ async def test_list_dishes(client: AsyncClient, create_dish):
     assert len(response.json()) == 1
     assert response.status_code == 200
 
+
 @pytest.mark.asyncio
 async def test_delete_dish(client: AsyncClient, create_dish):
     await client.post("/ingredients/dish/", json=create_dish)
     response = await client.delete("/ingredients/dish/1")
     assert response.status_code == 204
+
 
 @pytest.mark.asyncio
 async def test_delete_dish_does_not_exist(client: AsyncClient):
@@ -77,8 +84,32 @@ async def test_dish_detail(client: AsyncClient, create_dish):
     response = await client.get("/ingredients/dish/1")
     assert response.status_code == 200
 
+
 @pytest.mark.asyncio
 async def test_dish_detail_does_not_exist(client: AsyncClient):
     response = await client.get("/ingredients/dish/1")
     assert response.status_code == 404
 
+
+@pytest.mark.asyncio
+async def test_dish_add_tag(client: AsyncClient):
+    response = await client.get("/ingredients/dish/1/")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_dish_add_tag_to_many(client: AsyncClient):
+    response = await client.get("/ingredients/dish/1")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_dish_filter_by_tag_name(client: AsyncClient):
+    response = await client.get("/ingredients/dish/1")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_dish_filter_by_tag_id(client: AsyncClient):
+    response = await client.get("/ingredients/dish/1")
+    assert response.status_code == 404

@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import List, Sequence
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
@@ -56,13 +57,16 @@ async def current_user(user: User = Depends(get_current_user)) -> User:
     return user
 
 
+@user_router.get("/", response_model=List[UserList], status_code=200)
+async def user_list(session: AsyncSession = Depends(get_session)) -> Sequence[User]:
+    result = await session.execute(select(User).order_by(User.username))
+    users = result.scalars().all()
+    return users
+
+
 @user_router.get("/{user_id}", response_model=UserDetail, status_code=200)
 async def user_detail(user_id: int, session: AsyncSession = Depends(get_session)) -> User:
-    user = await session.execute(
-        select(User)
-        .options(selectinload(User.profile))
-        .where(User.id == user_id)
-    )
+    user = await session.execute(select(User).options(selectinload(User.profile)).where(User.id == user_id))
     user = user.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -87,10 +91,12 @@ async def update_user(
 
 
 @user_router.delete("/", status_code=204)
-async def delete_user(session: AsyncSession = Depends(get_session), user: User = Depends(get_current_user)) -> Response:
+async def delete_user(
+    session: AsyncSession = Depends(get_session), user: User = Depends(get_current_user)
+) -> Response:
     await session.delete(user)
     await session.commit()
-    return Response(content='', status_code=204)
+    return Response(content="", status_code=204)
 
 
 @user_router.post("/login", response_model=Token)
@@ -108,18 +114,19 @@ async def login_for_access_token(
 
 @user_router.post("/profile", response_model=ProfileDetail, status_code=201)
 async def create_user_profile(
-        profile: BaseProfile,
-        background_tasks: BackgroundTasks,
-        session: AsyncSession = Depends(get_session),
-        user: User = Depends(get_current_user),
+    profile: BaseProfile,
+    background_tasks: BackgroundTasks,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
 ):
     result = await session.scalars(select(Profile).where(Profile.user_id == user.id))
     if db_profile := result.first():
         return db_profile
     db_profile = Profile(**profile.model_dump(), user_id=user.id)
     session.add(db_profile)
-    dri_client = DRIClient()
-    background_tasks.add_task(dri_client.fill_profile,db_profile, session)
+    if settings.PLAYWRIGHT_ENABLED:
+        dri_client = DRIClient()
+        background_tasks.add_task(dri_client.fill_profile, db_profile, session)
     await session.commit()
     await session.refresh(db_profile)
     return db_profile
