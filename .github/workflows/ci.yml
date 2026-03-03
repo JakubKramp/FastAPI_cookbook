@@ -42,10 +42,13 @@ jobs:
     - name: Check out repo
       uses: actions/checkout@v6
 
+    - name: Validate JSON
+      run: echo '${{ secrets.GC_IMAGE_MANAGER_KEY }}' | python3 -c "import sys,json; json.load(sys.stdin); print('valid JSON')"
+
     - name: Google Cloud Auth
       uses: google-github-actions/auth@v2
       with:
-        credentials_json: "{{ secrets.GC_IMAG_MANAGER_KEY }}"
+        credentials_json: "{{ secrets.GC_IMAGE_MANAGER_KEY }}"
 
     - name: Set up google cloud SDK
       uses: google-github-actions/setup-gcloud@v1
@@ -56,5 +59,4 @@ jobs:
         context: .
         push: true
         tags: ${{ env.IMAGE_TAG}}
-
 
