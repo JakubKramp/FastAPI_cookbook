@@ -42,8 +42,8 @@ jobs:
     - name: Check out repo
       uses: actions/checkout@v6
 
-    - name: Validate JSON
-      run: echo '${{ secrets.GC_IMAGE_MANAGER_KEY }}' | python3 -c "import sys,json; json.load(sys.stdin); print('valid JSON')"
+    - name: Set image tag
+      run: echo 'IMAGE_TAG=${{secrets.GCLOUD_REGION}}-docker.pkg.dev/${{secrets.GCLOUD_PROJECT_ID}}/${{secrets.GCLOUD_REPOSITORY}}/Aproveche_API' >> $GITHUB_ENV
 
     - name: Google Cloud Auth
       uses: google-github-actions/auth@v2
