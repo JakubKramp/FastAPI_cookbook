@@ -42,8 +42,6 @@ jobs:
     - name: Check out repo
       uses: actions/checkout@v6
 
-    - name: Set image tag
-      run: echo "IMAGE_TAG=${{secrets.GCLOUD_REGION}}-docker.pkg.dev/${{secrets.GCLOUD_PROJECT_ID}}/${{secrets.GCLOUD_REPOSITORY}}/Aproveche_API" >> $GITHUB_ENV
 
     - name: Google Cloud Auth
       uses: google-github-actions/auth@v1
