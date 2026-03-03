@@ -35,3 +35,27 @@ jobs:
         run: docker compose build
       - name: Run tests
         run: docker compose -f docker-compose-ci.yml run api pytest --cov=. --cov-fail-under=90
+
+  push-to-gar:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - name: Set image tag
+      run: echo "IMAGE_TAG=${{secrets.GCLOUD_REGION}}-docker.pkg.dev/${{secrets.GCLOUD_PROJECT_ID}}/${{secrets.GCLOUD_REPOSITORY}}/Aproveche_API" >> $GITHUB_ENV
+
+    - name: Google Cloud Auth
+    - uses: google-github-actions/auth@v1
+      with:
+        credentials_json: "{{ secrets.GC_IMAGE_MANAGER_KEY}}"
+
+    - name: Set up google cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+
+    - name: Build and Push image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ env.IMAGE_TAG}}
+
+
