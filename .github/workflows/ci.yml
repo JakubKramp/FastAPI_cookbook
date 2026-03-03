@@ -55,6 +55,9 @@ jobs:
     - name: Set up google cloud SDK
       uses: google-github-actions/setup-gcloud@v1
 
+    - name: Configure Docker for GAR
+      run: gcloud auth configure-docker ${{ secrets.GCLOUD_REGION }}-docker.pkg.dev --quiet
+
     - name: Build and Push image
       uses: docker/build-push-action@v5
       with:
