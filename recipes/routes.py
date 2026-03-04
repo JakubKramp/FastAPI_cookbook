@@ -237,4 +237,6 @@ async def dish_toggle_favorites(
 
     await session.commit()
     await session.refresh(dish)
-    return dish
+    dish_data = DishDetail.model_validate(dish)
+    dish_data.is_favorite = user in dish.favorite_of if user else False
+    return dish_data
