@@ -32,7 +32,6 @@ from auth.schemas import (
     UserUpdate,
 )
 from config import settings
-from core.cache.cache import cached_view
 
 user_router = APIRouter(prefix="/user", tags=["auth"])
 
