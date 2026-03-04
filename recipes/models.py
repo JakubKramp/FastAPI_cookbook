@@ -64,6 +64,13 @@ dish_tag = Table(
     Column("tag_id", ForeignKey("tag.id"), primary_key=True),
 )
 
+user_dish = Table(
+    "user_dish",
+    Base.metadata,
+    Column("dish_id", ForeignKey("dish.id"), primary_key=True),
+    Column("user_id", ForeignKey("user.id"), primary_key=True),
+)
+
 
 class Dish(Base):
     """
@@ -81,6 +88,9 @@ class Dish(Base):
 
     ingredients: Mapped[List["IngredientItem"]] = relationship(back_populates="dish", lazy="selectin")
     tags: Mapped[list["Tag"]] = relationship(secondary=dish_tag, back_populates="dish", lazy="selectin")
+    favorite_of: Mapped[list["User"]] = relationship(
+        secondary=user_dish, back_populates="favorites", lazy="selectin"
+    )
 
 
 class IngredientItem(Base):

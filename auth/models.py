@@ -1,10 +1,16 @@
-from sqlalchemy import Enum, ForeignKey, String, event
+from typing import TYPE_CHECKING, List
+
+from sqlalchemy import ForeignKey, String, event
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.utils.db import Base
 from auth.constants import ActivityFactor, SexEnum
 from fridge.models import Fridge
+from recipes.models import user_dish
+
+if TYPE_CHECKING:
+    from recipes.models import Dish
 
 
 class User(Base):
@@ -31,6 +37,9 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
         uselist=False,
+    )
+    favorites: Mapped[List["Dish"]] = relationship(
+        secondary=user_dish, back_populates="favorite_of", lazy="selectin"
     )
 
     @validates("email")

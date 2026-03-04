@@ -3,9 +3,12 @@ from typing import Annotated
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from starlette.responses import JSONResponse, Response
 
+from app.security import get_current_user, get_current_user_optional
 from app.utils.db import get_session
+from auth.models import User
 from recipes.models import (
     Dish,
     Ingredient,
@@ -137,9 +140,16 @@ async def create_dish(dish_data: CreateDish, session: AsyncSession = Depends(get
 
 @ingredient_router.get("/dish/", response_model=list[ListDish], status_code=200)
 async def dish_list(
-    filter_params: Annotated[DishFilterParams, Query()], session: AsyncSession = Depends(get_session)
+    filter_params: Annotated[DishFilterParams, Query()],
+    session: AsyncSession = Depends(get_session),
+    user: User | None = Depends(get_current_user_optional),
 ):
     filters = []
+    if filter_params.favorites:
+        if user:
+            filters.append(Dish.favorite_of.any(User.id == user.id))
+        else:
+            return HTTPException(status_code=400, detail="Anonymous users can't have favorites")
     if filter_params.tag_id:
         filters.append(Dish.tags.any(Tag.id.in_(filter_params.tag_id)))
     if filter_params.tag_name:
@@ -206,3 +216,27 @@ async def dish_add_tag(dish_id: int, tag_data: CreateTag, session: AsyncSession 
     await session.commit()
     await session.refresh(dish)
     return dish
+
+
+@ingredient_router.post("/dish/{dish_id}/favorite", response_model=DishDetail, status_code=200)
+async def dish_toggle_favorites(
+    dish_id: int,
+    session: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    dish = await session.scalar(
+        select(Dish).where(Dish.id == dish_id).options(selectinload(Dish.favorite_of))
+    )
+    if not dish:
+        raise HTTPException(status_code=404, detail="Dish not found")
+
+    if user not in dish.favorite_of:
+        dish.favorite_of.append(user)
+    else:
+        dish.favorite_of.remove(user)
+
+    await session.commit()
+    await session.refresh(dish)
+    dish_data = DishDetail.model_validate(dish)
+    dish_data.is_favorite = user in dish.favorite_of if user else False
+    return dish_data

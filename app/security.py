@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -14,6 +14,7 @@ from auth.models import User
 from config import settings
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
+optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login", auto_error=False)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -83,3 +84,12 @@ async def get_current_user(
     )
     user = result.first()
     return user
+
+
+async def get_current_user_optional(
+    token: str = Depends(optional_oauth2_scheme), session: AsyncSession = Depends(get_session)
+) -> User | None:
+    if token:
+        return await get_current_user(token, session)
+    else:
+        return None

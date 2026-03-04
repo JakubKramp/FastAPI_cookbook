@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from recipes.tests.test_data.example_data import example_ingredient, example_product, example_tag
 
@@ -40,6 +40,7 @@ class CreateIngredient(BaseModel):
                 "name": "carrot",
             }
         }
+        from_attributes = True
 
 
 class ListIngredient(CreateIngredient, NutritionalValues):
@@ -110,6 +111,8 @@ class ListIngredientItem(BaseModel):
     amount: int
     ingredient: CreateIngredient
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ListDish(BaseModel):
     id: int
@@ -153,6 +156,7 @@ class TagSchema(BaseModel):
 class DishDetail(ListDish):
     nutritional_values: NutritionalValues | None = None
     tags: List[TagSchema] = []
+    is_favorite: bool = False
 
     class Config:
         json_schema_extra = {
@@ -172,6 +176,7 @@ class DishDetail(ListDish):
                 },
             }
         }
+        from_attributes = True
 
 
 class CreateProduct(BaseModel):
@@ -183,5 +188,6 @@ class CreateProduct(BaseModel):
 
 
 class DishFilterParams(BaseModel):
+    favorites: bool = False
     tag_name: List[str] = []
     tag_id: List[int] = []
