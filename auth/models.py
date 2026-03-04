@@ -36,7 +36,7 @@ class User(Base):
         uselist=False,
     )
     favorites: Mapped[List["Dish"]] = relationship(
-        secondary=user_dish, back_populates="favorites", lazy="selectin"
+        secondary=user_dish, back_populates="favorite_of", lazy="selectin"
     )
 
     @validates("email")

@@ -183,5 +183,6 @@ class CreateProduct(BaseModel):
 
 
 class DishFilterParams(BaseModel):
+    favorites: bool = False
     tag_name: List[str] = []
     tag_id: List[int] = []
