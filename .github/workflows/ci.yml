@@ -22,9 +22,21 @@ jobs:
       - run: uv sync --frozen --only-group ci
       - run: uv run ty check
 
+  bandit-check:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - name: Perform Bandit Analysis
+        uses: PyCQA/bandit-action@v1
+        with:
+          severity: high
+
   tests:
     runs-on: ubuntu-latest
-    needs: [ruff-lint, type-check]
+    needs: [ruff-lint, type-check, bandit-check]
     steps:
       - uses: actions/checkout@v6
       - name: Setup environment file
