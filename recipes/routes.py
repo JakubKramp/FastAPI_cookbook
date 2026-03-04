@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from starlette.responses import JSONResponse, Response
 
-from app.security import get_current_user
+from app.security import get_current_user, get_current_user_optional
 from app.utils.db import get_session
 from auth.models import User
 from recipes.models import (
@@ -142,7 +142,7 @@ async def create_dish(dish_data: CreateDish, session: AsyncSession = Depends(get
 async def dish_list(
     filter_params: Annotated[DishFilterParams, Query()],
     session: AsyncSession = Depends(get_session),
-    user: User | None = Depends(get_current_user),
+    user: User | None = Depends(get_current_user_optional),
 ):
     filters = []
     if filter_params.favorites:
