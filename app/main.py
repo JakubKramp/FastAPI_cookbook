@@ -15,7 +15,9 @@ app = FastAPI()
 
 @app.get("/health", status_code=200)
 async def health_check():
-    return {"status": "ok"}
+    return {"server_status": "ok"}
+
+
 
 
 app.add_middleware(
