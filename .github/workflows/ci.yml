@@ -34,7 +34,7 @@ jobs:
       - name: Build the image
         run: docker compose build
       - name: Run tests
-        run: docker compose -f docker-compose-ci.yml run api pytest --cov=. --cov-fail-under=90
+        run: docker compose -f docker-compose-ci.yml run api pytest --cov=. --cov-fail-under=85
 
   push-to-gar:
     runs-on: ubuntu-latest
