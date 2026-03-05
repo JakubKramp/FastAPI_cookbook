@@ -1,15 +1,11 @@
 volumes:
   pgdata:
-  venv:
 
 services:
   api:
     image: europe-west3-docker.pkg.dev/project-89939176-9dc3-469e-9dd/aprovevche-artifacts/cookbook-api:latest
     depends_on:
       - postgres
-    volumes:
-      - .:/app
-      - venv:/app/.venv  # preserve the venv from the image
 
     ports:
       - '8000:8000'
@@ -34,9 +30,6 @@ services:
     depends_on:
       - redis
       - postgres
-    volumes:
-      - .:/app
-      - venv:/app/.venv
     env_file:
       - config/.env
 
@@ -46,8 +39,5 @@ services:
     depends_on:
       - redis
       - postgres
-    volumes:
-      - .:/app
-      - venv:/app/.venv
     env_file:
       - config/.env
