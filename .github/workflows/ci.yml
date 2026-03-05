@@ -90,4 +90,4 @@ jobs:
         script: |
           cd ~/FastAPI_cookbook
           docker compose pull
-          docker compose -f docker-compose-prod up -d
+          docker compose -f docker-compose-prod.yml up -d
