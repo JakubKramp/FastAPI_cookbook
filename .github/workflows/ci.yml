@@ -89,5 +89,6 @@ jobs:
         key: ${{ secrets.VM_SSH_KEY }}
         script: |
           cd ~/FastAPI_cookbook
-          docker compose pull
+          gcloud auth configure-docker europe-west3-docker.pkg.dev
+          docker compose -f docker-compose-prod.yml pull
           docker compose -f docker-compose-prod.yml up -d

@@ -18,6 +18,8 @@ async def health_check():
     return {"server_status": "ok"}
 
 
+
+
 app.add_middleware(
     CORSMiddleware,  # type: ignore
     allow_origins=settings.CORS_ALLOWED_ORIGINS,
