@@ -28,11 +28,13 @@ dependencies = [
     "faker>=40.5.1",
     "factory-boy>=3.3.3",
     "celery[redis]>=5.6.2",
+    "google-cloud-storage>=3.9.0",
 ]
 
 
 [dependency-groups]
 ci = [
+    "bandit>=1.9.4",
     "ruff>=0.15.2",
     "ty>=0.0.18",
 ]

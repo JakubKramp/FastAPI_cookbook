@@ -191,3 +191,13 @@ class DishFilterParams(BaseModel):
     favorites: bool = False
     tag_name: List[str] = []
     tag_id: List[int] = []
+
+
+class ImageDetail(BaseModel):
+    id: int
+    filename: str
+    is_main: bool
+    dish_id: int
+    url: str
+
+    model_config = ConfigDict(from_attributes=True)
