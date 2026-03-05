@@ -13,7 +13,7 @@ engine = create_async_engine(settings.DATABASE_URL)
 app = FastAPI()
 
 
-@app.get("/health", status_code=200)
+@app.get("/health-check", status_code=200)
 async def health_check():
     return {"status": "ok"}
 
