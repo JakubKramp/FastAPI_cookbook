@@ -90,5 +90,6 @@ jobs:
         script: |
           cd ~/FastAPI_cookbook
           gcloud auth configure-docker europe-west3-docker.pkg.dev
+          docker compose -f docker-compose-prod.yml down
           docker compose -f docker-compose-prod.yml pull
           docker compose -f docker-compose-prod.yml up -d
