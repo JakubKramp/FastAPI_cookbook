@@ -1,11 +1,15 @@
-from datetime import date
+from datetime import date, timedelta
+from http.client import HTTPException
 from typing import List
 
-from sqlalchemy import Column, ForeignKey, String, Table, Text, UniqueConstraint, select
+from fastapi import UploadFile
+from google.cloud.storage import Client
+from sqlalchemy import Column, ForeignKey, Index, String, Table, Text, UniqueConstraint, event, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.utils.db import Base
+from config import settings
 
 
 class Ingredient(Base):
@@ -88,6 +92,7 @@ class Dish(Base):
 
     ingredients: Mapped[List["IngredientItem"]] = relationship(back_populates="dish", lazy="selectin")
     tags: Mapped[list["Tag"]] = relationship(secondary=dish_tag, back_populates="dish", lazy="selectin")
+    images: Mapped[list["Image"]] = relationship(back_populates="dish", lazy="selectin")
     favorite_of: Mapped[list["User"]] = relationship(
         secondary=user_dish, back_populates="favorites", lazy="selectin"
     )
@@ -177,3 +182,57 @@ class Tag(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(unique=True)
     dish: Mapped[List["Dish"]] = relationship(secondary=dish_tag, back_populates="tags", lazy="selectin")
+
+
+class Image(Base):
+    """
+    Tags a dish with a specific characteristic.
+    - Dish(recipes) many to many, through dish_tag
+    """
+
+    __tablename__ = "images"
+    __table_args__ = (
+        Index(
+            "unique_dish_main_picture",
+            "dish_id",
+            unique=True,
+            postgresql_where=text("is_main = true"),
+        ),
+    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    filename: Mapped[str] = mapped_column(unique=True)
+    is_main: Mapped[bool] = mapped_column(default=False)
+    dish_id: Mapped[int] = mapped_column(ForeignKey("dish.id"))
+    dish: Mapped["Dish"] = relationship(back_populates="images", lazy="selectin")
+
+    @property
+    def url(self) -> str:
+        client = Client.from_service_account_json(settings.GCLOUD_KEY_FILE)
+        bucket = client.bucket(settings.GCLOUD_BUCKET_NAME)
+        blob = bucket.blob(self.filename)
+        url = blob.generate_signed_url(
+            expiration=timedelta(hours=1),
+            method="GET",
+        )
+        return url
+
+    @classmethod
+    async def create(cls, file: UploadFile, dish_id: int, is_main: bool, session: AsyncSession) -> "Image":
+        try:
+            file_uploader = settings.FILE_UPLOADER_CLASS(file)
+            await file_uploader.upload_file()
+            image = cls(filename=file.filename, dish_id=dish_id, is_main=is_main)
+            session.add(image)
+            await session.flush()
+            return image
+        except HTTPException as e:
+            raise e
+
+
+from sqlalchemy import event
+
+
+@event.listens_for(Image, "after_delete")
+def delete_image_file(mapper, connection, target):
+    file_uploader = settings.FILE_UPLOADER_CLASS
+    file_uploader.delete_file(target.filename)

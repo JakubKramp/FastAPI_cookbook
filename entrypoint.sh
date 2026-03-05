@@ -1,3 +1,3 @@
 #!/bin/sh
-alembic upgrade head
+/app/.venv/bin/alembic upgrade head
 exec "$@"

@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Query, UploadFile
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -11,6 +11,7 @@ from app.utils.db import get_session
 from auth.models import User
 from recipes.models import (
     Dish,
+    Image,
     Ingredient,
     IngredientItem,
     Tag,
@@ -22,6 +23,7 @@ from recipes.schemas import (
     CreateTag,
     DishDetail,
     DishFilterParams,
+    ImageDetail,
     ListDish,
     ListIngredient,
     NutritionalValues,
@@ -240,3 +242,29 @@ async def dish_toggle_favorites(
     dish_data = DishDetail.model_validate(dish)
     dish_data.is_favorite = user in dish.favorite_of if user else False
     return dish_data
+
+
+@ingredient_router.post("/dish/{dish_id}/picture", response_model=ImageDetail)
+async def upload_image(
+    dish_id: int,
+    is_main: bool = Form(...),
+    session: AsyncSession = Depends(get_session),
+    file: UploadFile | None = None,
+):
+    if not file:
+        raise HTTPException(status_code=400, detail="No file provided")
+
+    image = await Image.create(file, dish_id, is_main, session)
+    await session.commit()
+    await session.refresh(image)
+    return image
+
+
+@ingredient_router.delete("/image/{image_id}")
+async def delete_image(image_id: int, session: AsyncSession = Depends(get_session)):
+    image = await session.get(Image, image_id)
+    if not image:
+        raise HTTPException(status_code=404, detail="Image not found")
+    await session.delete(image)
+    await session.commit()
+    return JSONResponse(content="", status_code=204)
