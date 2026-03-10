@@ -118,6 +118,8 @@ class ListDish(BaseModel):
     id: int
     name: str
     recipe: Optional[str]
+    servings: int | None
+    prep_time: int | None
     ingredients: List[ListIngredientItem]
 
     class Config:
@@ -126,6 +128,8 @@ class ListDish(BaseModel):
                 "id": 72,
                 "name": "Mashed potatoes",
                 "recipe": "Mash the potatoes along with the butter. Eat the mashed potatoes",
+                "servings": 4,
+                "prep_time": 60,
                 "ingredients": [
                     {
                         "amount": 700,
