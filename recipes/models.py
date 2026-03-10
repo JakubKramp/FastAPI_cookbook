@@ -89,6 +89,8 @@ class Dish(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
     recipe: Mapped[str | None] = mapped_column(Text)
+    servings: Mapped[int | None] = mapped_column()
+    prep_time: Mapped[int | None] = mapped_column()
 
     ingredients: Mapped[List["IngredientItem"]] = relationship(back_populates="dish", lazy="selectin")
     tags: Mapped[list["Tag"]] = relationship(secondary=dish_tag, back_populates="dish", lazy="selectin")
