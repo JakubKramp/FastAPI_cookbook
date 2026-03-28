@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 
-from auth.constants import SexEnum
+from auth.constants import ActivityFactor, SexEnum
 from auth.tests.example_data.example_users import (
     example_base_profile,
     example_profile,
@@ -39,7 +39,7 @@ class UserCreate(BaseModel):
 
 class UpdateProfile(BaseModel):
     sex: SexEnum | None = None
-    activity_factor: str | None = None
+    activity_factor: ActivityFactor | None = None
     age: int | None = None
     height: int | None = None
     weight: int | None = None
@@ -48,7 +48,7 @@ class UpdateProfile(BaseModel):
 
 class BaseProfile(BaseModel):
     sex: SexEnum
-    activity_factor: str | None
+    activity_factor: ActivityFactor
     age: int
     height: int
     weight: int
